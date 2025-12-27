@@ -4,16 +4,16 @@ from sqlalchemy import func
 from backend.app.db.session import get_db
 from backend.app.models.weather import Weather
 from backend.app.services.weather_fetcher import fetch_and_store
+from backend.app.services.ml import train_and_predict
 
 router=APIRouter(prefix="/weather",tags=["weather"])
 
 @router.get("/current/{city}")
 def current(city:str,db:Session=Depends(get_db)):
-    fetch_and_store(city,db)
-    return db.query(Weather)\
-        .filter(Weather.city==city)\
-        .order_by(Weather.recorded_at.desc())\
-        .first()
+    w=fetch_and_store(city,db)
+    if not w:
+        return {"error":"weather data unavailable"}
+    return w
 
 @router.get("/hourly/{city}")
 def hourly(city:str,db:Session=Depends(get_db)):
@@ -51,3 +51,7 @@ def yearly(city:str,db:Session=Depends(get_db)):
      .group_by("year")\
      .order_by("year")\
      .all()
+
+@router.get("/predict/{city}")
+def predict(city: str):
+    return train_and_predict(city)
