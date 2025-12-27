@@ -1,12 +1,16 @@
 from fastapi import FastAPI
 from backend.app.db.database import Base,engine
 from backend.app.api.weather import router as weather_router
-from backend.app.models.weather import Weather
+from backend.app.services.scheduler import start_scheduler
 
 app=FastAPI(title="Weather Analytics API",version="1.0.0")
 
 Base.metadata.create_all(bind=engine)
 app.include_router(weather_router)
+
+@app.on_event("startup")
+def startup():
+    start_scheduler()
 
 @app.get("/")
 def health():
