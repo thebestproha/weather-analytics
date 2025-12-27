@@ -27,4 +27,27 @@ def daily(city:str,db:Session=Depends(get_db)):
     return db.query(
         func.date(Weather.recorded_at).label("day"),
         func.avg(Weather.temperature).label("temp")
-    ).filter(Weather.city==city).group_by("day").all()
+    ).filter(Weather.city==city)\
+     .group_by("day")\
+     .order_by("day")\
+     .all()
+
+@router.get("/monthly/{city}")
+def monthly(city:str,db:Session=Depends(get_db)):
+    return db.query(
+        func.strftime("%Y-%m",Weather.recorded_at).label("month"),
+        func.avg(Weather.temperature).label("temp")
+    ).filter(Weather.city==city)\
+     .group_by("month")\
+     .order_by("month")\
+     .all()
+
+@router.get("/yearly/{city}")
+def yearly(city:str,db:Session=Depends(get_db)):
+    return db.query(
+        func.strftime("%Y",Weather.recorded_at).label("year"),
+        func.avg(Weather.temperature).label("temp")
+    ).filter(Weather.city==city)\
+     .group_by("year")\
+     .order_by("year")\
+     .all()
