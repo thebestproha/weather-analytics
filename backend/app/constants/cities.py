@@ -1,0 +1,13 @@
+CITIES=[
+    "Chennai",
+    "Mumbai",
+    "Delhi",
+    "Bengaluru",
+    "Hyderabad",
+    "Kolkata",
+    "Pune",
+    "Ahmedabad",
+    "Jaipur",
+    "Kochi",
+    "Trivandrum"
+]
