@@ -1,54 +1,73 @@
 import {useEffect,useState} from "react"
 import axios from "axios"
-import {LineChart,Line,XAxis,YAxis,Tooltip,CartesianGrid} from "recharts"
-
-const API="http://127.0.0.1:8000"
-
-function Card({title,value}){
-  return(
-    <div style={{
-      padding:"16px",
-      borderRadius:"12px",
-      background:"#111",
-      color:"#fff",
-      minWidth:"180px"
-    }}>
-      <div style={{opacity:0.7,fontSize:"14px"}}>{title}</div>
-      <div style={{fontSize:"28px",fontWeight:"bold"}}>{value}</div>
-    </div>
-  )
-}
+import {
+  LineChart,Line,CartesianGrid,XAxis,YAxis,Tooltip,ResponsiveContainer
+} from "recharts"
 
 export default function App(){
   const[hourly,setHourly]=useState([])
+  const[pred,setPred]=useState([])
   const[current,setCurrent]=useState(null)
 
   useEffect(()=>{
-    axios.get(`${API}/weather/current/Chennai`).then(r=>setCurrent(r.data))
-    axios.get(`${API}/weather/hourly/Chennai`).then(r=>setHourly(r.data))
+    axios.get("http://127.0.0.1:8000/weather/current/Chennai")
+      .then(r=>setCurrent(r.data))
+
+    axios.get("http://127.0.0.1:8000/weather/hourly/Chennai")
+      .then(r=>setHourly(r.data.map((d,i)=>({x:i,temp:d.temperature}))))
+
+    axios.get("http://127.0.0.1:8000/weather/predict/Chennai")
+      .then(r=>setPred(r.data.map((d,i)=>({x:i,temp:d.predicted_temperature}))))
   },[])
 
   return(
-    <div style={{padding:"24px",fontFamily:"system-ui"}}>
-      <h1>🌤 Weather Analytics – Chennai</h1>
+    <div className="container">
+      <div className="header">🌤 Weather Analytics — Chennai</div>
 
-      {current && (
-        <div style={{display:"flex",gap:"16px",margin:"24px 0"}}>
-          <Card title="Temperature (°C)" value={current.temperature}/>
-          <Card title="Humidity (%)" value={current.humidity}/>
-          <Card title="Pressure (hPa)" value={current.pressure}/>
-          <Card title="Wind (m/s)" value={current.wind_speed}/>
+      <div className="cards">
+        <div className="card">
+          <span>Temperature</span>
+          <strong>{current?current.temperature:"--"} °C</strong>
         </div>
-      )}
+        <div className="card">
+          <span>Humidity</span>
+          <strong>{current?current.humidity:"--"} %</strong>
+        </div>
+        <div className="card">
+          <span>Pressure</span>
+          <strong>{current?current.pressure:"--"} hPa</strong>
+        </div>
+      </div>
 
-      <h2>Hourly Temperature</h2>
-      <LineChart width={1000} height={420} data={hourly}>
-        <CartesianGrid strokeDasharray="3 3"/>
-        <XAxis dataKey="recorded_at"/>
-        <YAxis/>
-        <Tooltip/>
-        <Line dataKey="temperature" stroke="#6366f1" dot={false}/>
-      </LineChart>
+      <div className="section">
+        <h3>Hourly Temperature (Observed)</h3>
+        <div className="chartBox" style={{height:300}}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={hourly}>
+              <CartesianGrid stroke="#333"/>
+              <XAxis dataKey="x"/>
+              <YAxis/>
+              <Tooltip/>
+              <Line type="monotone" dataKey="temp" stroke="#4ade80"/>
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="section">
+        <h3>Next 24 Hours (Prediction)</h3>
+        <div className="chartBox" style={{height:300}}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={pred}>
+              <CartesianGrid stroke="#333"/>
+              <XAxis dataKey="x"/>
+              <YAxis/>
+              <Tooltip/>
+              <Line type="monotone" dataKey="temp" stroke="#60a5fa"/>
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   )
 }

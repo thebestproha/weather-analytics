@@ -1,7 +1,7 @@
-CITIES=[
+CITIES = [
     "Chennai",
-    "Mumbai",
     "Delhi",
+    "Mumbai",
     "Bengaluru",
     "Hyderabad",
     "Kolkata",

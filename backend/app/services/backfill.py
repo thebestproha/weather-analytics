@@ -1,13 +1,10 @@
-from backend.app.db.database import SessionLocal
 from backend.app.services.weather_fetcher import fetch_and_store
-from datetime import timedelta, datetime
-import time
+from backend.app.db.database import SessionLocal
 
-def backfill_city(city, hours=24):
+def backfill_city(city, hours=48):
     db = SessionLocal()
     try:
-        for i in range(hours):
+        for _ in range(hours):
             fetch_and_store(city, db)
-            time.sleep(1)
     finally:
         db.close()

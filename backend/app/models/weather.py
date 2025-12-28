@@ -1,11 +1,11 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
-from backend.app.db.database import Base
+from sqlalchemy import Column, Integer, Float, String, DateTime
 from datetime import datetime
+from backend.app.db.database import Base
 
 class Weather(Base):
     __tablename__ = "weather"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     city = Column(String, index=True)
     temperature = Column(Float)
     humidity = Column(Integer)

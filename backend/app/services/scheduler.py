@@ -1,17 +1,9 @@
 from apscheduler.schedulers.background import BackgroundScheduler
+from backend.app.constants.cities import CITIES
 from backend.app.db.database import SessionLocal
 from backend.app.services.weather_fetcher import fetch_and_store
 
-CITIES = [
-    "Chennai",
-    "Delhi",
-    "Mumbai",
-    "Bengaluru",
-    "Hyderabad",
-    "Kolkata"
-]
-
-def collect_weather():
+def collect_all():
     db = SessionLocal()
     try:
         for city in CITIES:
@@ -21,5 +13,5 @@ def collect_weather():
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(collect_weather, "interval", hours=1)
+    scheduler.add_job(collect_all, "interval", hours=1, id="weather_job")
     scheduler.start()
