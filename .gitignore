@@ -1,5 +1,23 @@
+# Python
 venv/
 __pycache__/
+*.pyc
+
+# Node / frontend
 node_modules/
-weather.db
+
+# Environment & secrets
 .env
+.cdsapirc
+
+# Databases
+weather.db
+
+# Large climate data (ERA5)
+*.nc
+*.grib
+data/
+
+# OS
+.DS_Store
+Thumbs.db
