@@ -1,64 +1,41 @@
-import numpy as np
 import pandas as pd
+import numpy as np
 from sklearn.linear_model import LinearRegression
-from datetime import datetime
 from backend.app.db.database import SessionLocal
 from backend.app.models.weather import Weather
 
-def train_and_predict(city: str):
-    db = SessionLocal()
-    try:
-        rows = (
-            db.query(Weather)
-            .filter(Weather.city == city)
-            .order_by(Weather.recorded_at.desc())
-            .limit(168)
-            .all()
-        )
+def train_and_predict(city):
+    db=SessionLocal()
+    rows=db.query(Weather).filter(
+        Weather.city==city
+    ).order_by(Weather.recorded_at).all()
+    db.close()
 
-        if len(rows) < 24:
-            return {"error": "Not enough data"}
+    if len(rows)<48:
+        return {"error":"not enough data"}
 
-        rows = list(reversed(rows))
+    df=pd.DataFrame([{
+        "t":i,
+        "temp":r.temperature
+    } for i,r in enumerate(rows)])
 
-        df = pd.DataFrame({
-            "temp": [r.temperature for r in rows],
-            "hour": [r.recorded_at.hour for r in rows],
-            "day": [r.recorded_at.weekday() for r in rows],
-        })
+    X=df[["t"]]
+    y=df["temp"]
 
-        df["rolling_mean"] = df["temp"].rolling(6).mean().fillna(method="bfill")
-        df["trend"] = df["temp"].diff().fillna(0)
+    model=LinearRegression()
+    model.fit(X,y)
 
-        X = df[["hour", "day", "rolling_mean", "trend"]].values
-        y = df["temp"].values
+    future=len(df)+1
+    pred=model.predict([[future]])[0]
 
-        model = LinearRegression()
-        model.fit(X, y)
+    trend="stable"
+    slope=model.coef_[0]
+    if slope>0.01:
+        trend="rising"
+    elif slope<-0.01:
+        trend="falling"
 
-        now = datetime.utcnow()
-        last = df.iloc[-1]
-
-        X_next = np.array([[
-            now.hour,
-            now.weekday(),
-            last["rolling_mean"],
-            last["trend"],
-        ]])
-
-        pred = model.predict(X_next)[0]
-
-        trend_label = (
-            "rising" if last["trend"] > 0.1 else
-            "falling" if last["trend"] < -0.1 else
-            "stable"
-        )
-
-        return {
-            "predicted_temperature": round(float(pred), 2),
-            "trend": trend_label,
-            "trained_on_hours": len(df),
-        }
-
-    finally:
-        db.close()
+    return {
+        "predicted_temperature":round(float(pred),2),
+        "trend":trend
+    }
