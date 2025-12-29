@@ -3,36 +3,61 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.app.db.deps import get_db
 from backend.app.models.weather import Weather
-from backend.app.services.weather_fetcher import fetch_and_store
-from backend.app.services.ml import train_and_predict
+from backend.app.services.ml import predict_next_hour
 
 router = APIRouter(prefix="/weather", tags=["weather"])
 
 @router.get("/current/{city}")
 def current(city: str, db: Session = Depends(get_db)):
-    w = db.query(Weather)\
-        .filter(Weather.city.ilike(city))\
+    # 1️⃣ Try LIVE API data first
+    live = db.query(Weather)\
+        .filter(
+            Weather.city.ilike(city),
+            Weather.source == "API"
+        )\
         .order_by(Weather.recorded_at.desc())\
         .first()
 
-    if not w:
-        return {"error": "no data available"}
+    if live:
+        return {
+            "city": live.city,
+            "temperature": live.temperature,
+            "humidity": live.humidity,
+            "pressure": live.pressure,
+            "wind_speed": live.wind_speed,
+            "source": "API",
+            "recorded_at": live.recorded_at
+        }
 
-    return {
-        "city": w.city,
-        "temperature": w.temperature,
-        "humidity": w.humidity,
-        "pressure": w.pressure,
-        "wind_speed": w.wind_speed,
-        "recorded_at": w.recorded_at
-    }
+    # 2️⃣ Fallback to ERA5 (most recent)
+    hist = db.query(Weather)\
+        .filter(
+            Weather.city.ilike(city),
+            Weather.source == "ERA5"
+        )\
+        .order_by(Weather.recorded_at.desc())\
+        .first()
+
+    if hist:
+        return {
+            "city": hist.city,
+            "temperature": hist.temperature,
+            "humidity": hist.humidity,
+            "pressure": hist.pressure,
+            "wind_speed": hist.wind_speed,
+            "source": "ERA5 (fallback)",
+            "recorded_at": hist.recorded_at
+        }
+
+    return {"error": "no data available"}
 
 
 @router.get("/hourly/{city}")
 def hourly(city: str, db: Session = Depends(get_db)):
-    rows = db.query(Weather).filter(
-        Weather.city.ilike(city)
-    ).order_by(Weather.recorded_at).all()
+    rows = db.query(Weather)\
+        .filter(Weather.city.ilike(city))\
+        .order_by(Weather.recorded_at)\
+        .all()
 
     return [
         {
@@ -89,5 +114,10 @@ def yearly(city: str, db: Session = Depends(get_db)):
 
 
 @router.get("/predict/{city}")
-def predict(city: str):
-    return train_and_predict(city)
+def predict(city: str, db: Session = Depends(get_db)):
+    p = predict_next_hour(db, city)
+    return {
+        "city": city,
+        "next_hour_temp": p
+    }
+

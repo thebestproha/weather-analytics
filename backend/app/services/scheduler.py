@@ -1,15 +1,26 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from backend.app.db.deps import get_db
 from backend.app.services.weather_fetcher import fetch_and_store
-from backend.app.constants.cities import CITIES
+from backend.app.constants.city_coords import CITY_COORDS
+from backend.app.db.database import SessionLocal
 
-def job():
-    db=next(get_db())
-    for c in CITIES:
-        fetch_and_store(c,db)
-    db.close()
+scheduler = BackgroundScheduler()
+
+def collect_live_weather():
+    db = SessionLocal()
+    try:
+        for city, (lat, lon) in CITY_COORDS.items():
+            fetch_and_store(city=city, lat=lat, lon=lon, db=db)
+            print(f"[LIVE] Stored weather for {city}")
+        db.commit()
+    finally:
+        db.close()
 
 def start_scheduler():
-    s=BackgroundScheduler()
-    s.add_job(job,"interval",hours=1)
-    s.start()
+    scheduler.add_job(
+        collect_live_weather,
+        trigger="interval",
+        minutes=30,
+        id="live_weather_job",
+        replace_existing=True
+    )
+    scheduler.start()

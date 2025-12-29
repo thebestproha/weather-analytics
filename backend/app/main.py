@@ -12,6 +12,8 @@ app.include_router(weather_router)
 def startup():
     start_scheduler()
 
+
+
 @app.get("/")
 def root():
     return {"status": "ok"}
