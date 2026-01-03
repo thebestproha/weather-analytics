@@ -21,3 +21,12 @@ Thumbs.db
 
 # Cache / temp
 *.log
+# Databases
+*.db
+
+# Python
+venv/
+__pycache__/
+
+# Node
+node_modules/
