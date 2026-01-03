@@ -4,8 +4,9 @@ from sqlalchemy import func
 from backend.app.db.deps import get_db
 from backend.app.models.weather import Weather
 from backend.app.services.ml import predict_next_hour
+from backend.app.services.ml_predictor import predict_next_hour
 
-router = APIRouter(prefix="/weather", tags=["weather"])
+router = APIRouter(tags=["weather"])
 
 @router.get("/current/{city}")
 def current(city: str, db: Session = Depends(get_db)):
@@ -121,3 +122,35 @@ def predict(city: str, db: Session = Depends(get_db)):
         "next_hour_temp": p
     }
 
+@router.get("/predict/1h/{city}")
+def predict_1h(city:str):
+    p=predict_next_hour(city)
+    if p is None:
+        return {"error":"model not trained"}
+    return {
+        "city":city,
+        "next_hour_temperature":p
+    }
+
+from backend.app.services.ml_predictor import (
+    predict_next_hour,
+    predict_next_24_hours,
+    predict_next_7_days
+)
+
+@router.get("/predict/hour/{city}")
+def predict_hour(city: str):
+    return {"city": city, "temp": predict_next_hour(city)}
+
+@router.get("/predict/24h/{city}")
+def predict_24h(city: str):
+    return {"city": city, "temps": predict_next_24_hours(city)}
+
+@router.get("/predict/7d/{city}")
+def predict_7d(city: str):
+    return {"city": city, "temps": predict_next_7_days(city)}
+
+@router.get("/predict/hour/{city}")
+def predict_hour(city:str):
+    y=predict_next_hour(city)
+    return {"city":city,"temp":y}

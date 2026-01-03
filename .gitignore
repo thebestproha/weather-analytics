@@ -3,21 +3,21 @@ venv/
 __pycache__/
 *.pyc
 
-# Node / frontend
+# Node
 node_modules/
+npm-debug.log*
+yarn-error.log*
 
-# Environment & secrets
-.env
-.cdsapirc
-
-# Databases
-weather.db
-
-# Large climate data (ERA5)
-*.nc
-*.grib
-data/
+# React build
+build/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Cache / temp
+*.log
