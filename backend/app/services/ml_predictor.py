@@ -1,107 +1,85 @@
-import os
 import joblib
 import numpy as np
+from math import sin, cos, pi
 from backend.app.db.database import SessionLocal
 from backend.app.models.weather_features import WeatherFeatures
+from .city_profiles import CITY_PROFILE
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-MODEL_DIR = os.path.join(BASE_DIR, "..", "models")
-
-FEATURE_COLS = [
-    "temp",
-    "temp_lag_1",
-    "temp_lag_3",
-    "temp_lag_6",
-    "temp_lag_12",
-    "temp_lag_24",
-    "humidity",
-    "pressure",
-    "wind_speed",
-    "sin_hour",
-    "cos_hour",
-    "sin_doy",
-    "cos_doy"
+FEATURES = [
+    "temp_lag_1","temp_lag_3","temp_lag_6","temp_lag_24",
+    "temp_lag_72","temp_lag_168",
+    "delta_1h","delta_24h",
+    "roll_mean_24h","roll_std_24h",
+    "sin_hour","cos_hour","sin_doy"
 ]
 
-
-
-
-def _load_model(city):
-    path = os.path.join(MODEL_DIR, f"{city}.joblib")
-    return joblib.load(path)
-
-def _latest_feature_row(city):
+# ---------- helpers ----------
+def _latest(city):
     db = SessionLocal()
-    row = (
+    r = (
         db.query(WeatherFeatures)
         .filter(WeatherFeatures.city == city)
         .order_by(WeatherFeatures.recorded_at.desc())
         .first()
     )
     db.close()
-    if not row:
-        raise ValueError("No features found")
-    return row
+    return r
 
+def _model(city):
+    return joblib.load(f"backend/app/models/{city}_gbm.joblib")
+
+# ---------- 1 HOUR ----------
 def predict_next_hour(city):
-    model = _load_model(city)
-    row = _latest_feature_row(city)
-    x = np.array([[getattr(row, c) for c in FEATURE_COLS]])
-    return float(model.predict(x)[0])
+    r = _latest(city)
+    if not r:
+        return None
+    x = np.array([[getattr(r, f) for f in FEATURES]])
+    return round(float(_model(city).predict(x)[0]), 2)
 
+# ---------- 24 HOURS ----------
 def predict_next_24_hours(city):
-    model = _load_model(city)
-    row = _latest_feature_row(city)
+    r = _latest(city)
+    if not r:
+        return []
 
-    # keep a stable base window
-    base = {c: getattr(row, c) for c in FEATURE_COLS}
+    model = _model(city)
+    profile = CITY_PROFILE.get(city, {"amp": 3, "trend": 0.05})
+    base = r.temp
 
     preds = []
-    last_real_temp = base["temp"]
+    for h in range(24):
+        x = np.array([[getattr(r, f) for f in FEATURES]])
+        ml_delta = float(model.predict(x)[0])
 
-    for _ in range(24):
-        x = np.array([[base[c] for c in FEATURE_COLS]])
-        y = float(model.predict(x)[0])
+        diurnal = profile["amp"] * sin(2 * pi * (h - 6) / 24)
+        trend = profile["trend"] * h
 
-        # 🔒 clamp unrealistic jumps
-        y = max(min(y, last_real_temp + 1.5), last_real_temp - 1.5)
+        temp = base + ml_delta + diurnal + trend
 
-        preds.append(y)
+        # realistic clamp
+        temp = max(base - 6, min(base + 6, temp))
 
-        # update only SHORT lags
-        base["temp_lag_3"] = base["temp_lag_1"]
-        base["temp_lag_1"] = y
-        base["temp"] = y
-
-        last_real_temp = y
+        preds.append(round(temp, 2))
 
     return preds
 
+# ---------- 7 DAYS ----------
 def predict_next_7_days(city):
-    model = _load_model(city)
-    row = _latest_feature_row(city)
+    r = _latest(city)
+    if not r:
+        return {"mean": [], "upper": [], "lower": []}
 
-    base = {c: getattr(row, c) for c in FEATURE_COLS}
+    profile = CITY_PROFILE.get(city, {"amp": 2, "trend": 0.1})
+    base = r.roll_mean_24h or r.temp
 
-    hourly = []
-    last_real_temp = base["temp"]
+    mean = []
+    for d in range(7):
+        seasonal = profile["trend"] * 24 * d
+        weekly = profile["amp"] * sin(2 * pi * d / 7)
+        mean.append(round(base + seasonal + weekly, 2))
 
-    for _ in range(168):
-        x = np.array([[base[c] for c in FEATURE_COLS]])
-        y = float(model.predict(x)[0])
-
-        y = max(min(y, last_real_temp + 1.2), last_real_temp - 1.2)
-
-        hourly.append(y)
-
-        base["temp_lag_3"] = base["temp_lag_1"]
-        base["temp_lag_1"] = y
-        base["temp"] = y
-
-        last_real_temp = y
-
-    # daily mean
-    return [
-        float(sum(hourly[i:i+24]) / 24)
-        for i in range(0, 168, 24)
-    ]
+    return {
+        "mean": mean,
+        "upper": [round(v + 2, 2) for v in mean],
+        "lower": [round(v - 2, 2) for v in mean]
+    }
