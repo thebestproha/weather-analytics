@@ -56,6 +56,73 @@ function getDayLabel(offset) {
   return d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
 }
 
+function normalizeHourlySeries(hourlyData, target = 24) {
+  if (!Array.isArray(hourlyData) || hourlyData.length === 0) {
+    return [];
+  }
+
+  if (hourlyData.length >= target) {
+    return hourlyData.slice(0, target);
+  }
+
+  const srcTemps = hourlyData
+    .map((entry) => Number(entry?.temp))
+    .filter((v) => Number.isFinite(v));
+  if (srcTemps.length === 0) {
+    return [];
+  }
+
+  let startHour = new Date().getHours();
+  const firstHourText = String(hourlyData[0]?.hour || "").slice(0, 2);
+  const parsed = Number(firstHourText);
+  if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 23) {
+    startHour = parsed;
+  }
+
+  const out = [];
+  for (let i = 0; i < target; i += 1) {
+    const pos = (i * (srcTemps.length - 1)) / (target - 1);
+    const lo = Math.floor(pos);
+    const hi = Math.min(srcTemps.length - 1, lo + 1);
+    const w = pos - lo;
+    const temp = (1 - w) * srcTemps[lo] + w * srcTemps[hi];
+    out.push({
+      hour: `${String((startHour + i) % 24).padStart(2, "0")}:00`,
+      temp: Number(temp.toFixed(2)),
+    });
+  }
+  return out;
+}
+
+function normalizeDailySeries(daily, target = 7) {
+  const mean = Array.isArray(daily?.mean) ? daily.mean.map((v) => Number(v)) : [];
+  const upper = Array.isArray(daily?.upper) ? daily.upper.map((v) => Number(v)) : [];
+  const lower = Array.isArray(daily?.lower) ? daily.lower.map((v) => Number(v)) : [];
+
+  if (mean.length === 0) {
+    return { mean: [], upper: [], lower: [] };
+  }
+
+  while (mean.length < target) {
+    const step = mean.length >= 2 ? (mean[mean.length - 1] - mean[mean.length - 2]) * 0.7 : 0;
+    mean.push(Number((mean[mean.length - 1] + step).toFixed(2)));
+  }
+
+  while (upper.length < target) {
+    upper.push(Number((mean[upper.length] + 1.5).toFixed(2)));
+  }
+
+  while (lower.length < target) {
+    lower.push(Number((mean[lower.length] - 1.5).toFixed(2)));
+  }
+
+  return {
+    mean: mean.slice(0, target),
+    upper: upper.slice(0, target),
+    lower: lower.slice(0, target),
+  };
+}
+
 async function fetchTodayOpenWeatherSummary(city) {
   try {
     const url = `${OPENWEATHER_TODAY_BASE}/${encodeURIComponent(city)}`;
@@ -197,14 +264,16 @@ async function loadTrends(city) {
  * Render 24-hour temperature chart using Chart.js
  */
 function renderHourlyChart(hourlyData) {
-  if (!hourlyData || !Array.isArray(hourlyData) || hourlyData.length === 0) {
+  const normalizedHourly = normalizeHourlySeries(hourlyData, 24);
+
+  if (!normalizedHourly || normalizedHourly.length === 0) {
     console.warn("No hourly data available");
     return;
   }
   
   // Extract labels and temperatures from API response
-  const labels = hourlyData.map(entry => entry.hour || "—");
-  const temperatures = hourlyData.map(entry => 
+  const labels = normalizedHourly.map(entry => entry.hour || "—");
+  const temperatures = normalizedHourly.map(entry => 
     entry.temp !== undefined && entry.temp !== null ? entry.temp : null
   );
   
@@ -288,17 +357,23 @@ function renderHourlyChart(hourlyData) {
  * Render 7-day forecast cards
  */
 function renderDailyForecast(daily, todayOverride = null) {
+  const normalizedDaily = normalizeDailySeries(daily, 7);
+  if (!normalizedDaily.mean.length) {
+    dailyGrid.innerHTML = "";
+    return;
+  }
+
   dailyGrid.innerHTML = "";
-  for (let i = 0; i < daily.mean.length; i += 1) {
+  for (let i = 0; i < normalizedDaily.mean.length; i++) {
     const meanValue = (i === 0 && todayOverride && Number.isFinite(todayOverride.mean))
       ? Number(todayOverride.mean)
-      : Number(daily.mean[i]);
+      : Number(normalizedDaily.mean[i]);
     const upperValue = (i === 0 && todayOverride && Number.isFinite(todayOverride.upper))
       ? Number(todayOverride.upper)
-      : Number(daily.upper[i]);
+      : Number(normalizedDaily.upper[i]);
     const lowerValue = (i === 0 && todayOverride && Number.isFinite(todayOverride.lower))
       ? Number(todayOverride.lower)
-      : Number(daily.lower[i]);
+      : Number(normalizedDaily.lower[i]);
 
     const card = document.createElement("div");
     card.className = "day-card";
