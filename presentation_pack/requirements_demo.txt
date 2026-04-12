@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlalchemy
+apscheduler
+requests
+numpy
+pandas
+scikit-learn
+joblib
+matplotlib
+meteostat
+python-dateutil

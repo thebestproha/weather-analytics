@@ -5,6 +5,11 @@ __pycache__/
 
 # Node
 node_modules/
+
+# Large local artifacts
+presentation_pack.zip
+backend/app/models/*_model_c_et.joblib
+presentation_pack/backend/app/models/*_model_c_et.joblib
 npm-debug.log*
 yarn-error.log*
 

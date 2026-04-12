@@ -1,0 +1,167 @@
+"""
+PRODUCTION LOCK - MODEL A DIURNAL CORRECTION
+============================================
+
+DECISION: Option A - Physics-Based Correction (LOCKED)
+DATE: 2026-02-07
+STATUS: Production Ready ✓
+
+EXECUTIVE SUMMARY
+=================
+Model A (24h hourly predictions) implements a light physics-based diurnal 
+correction (α=0.20) to fix peak timing realism. This approach was chosen 
+over climatology-based correction because historical Meteostat data contains 
+a morning-peak bias (~09:00) that climatology reproduces. Physics-based 
+correction provides an independent ground truth (solar heating pattern) 
+that shifts predictions to peak at ~14:00 (physically realistic for Chennai).
+
+PROBLEM STATEMENT
+==================
+Issue: Model predictions peaked at 08-09:00 (morning) instead of 13-15:00 (afternoon)
+Root Cause: 
+  - Meteostat historical data has morning-peak timing artifact
+  - temp_lag_24 feature has 80.6% importance, learns this artifact
+  - Cyclic features (sin_hour, cos_hour) have low importance (2-3%)
+
+Alternative Considered:
+  - Climatology-based anchoring rejected
+  - Reason: Climatology derived from biased data reproduces same morning peak
+  - Analysis showed climatology peaks at 09:00 (same problem as model)
+
+SOLUTION ARCHITECTURE
+=====================
+Implementation: ml_predictor.py::predict_next_24_hours()
+
+Core Formula:
+  corrected = model_pred + α × physics_offset[hour]
+  where α = 0.20 (light correction)
+
+Physics Function:
+  physics_offset[h] = 4.0 × sin(2π(h-8)/24)
+  - Peaks at hour 14 (2 PM)
+  - Minimum at hour 05 (5 AM)
+  - Amplitude: 4.0°C (typical diurnal range for Chennai)
+  
+Physical Basis:
+  - Solar noon: ~12:15 IST (Chennai longitude 80.27°E)
+  - Thermal lag: ~2 hours (ground/air heat capacity)
+  - Expected peak: 14:00 (solar noon + thermal lag)
+
+Weight Distribution:
+  - 80% Model: Preserves learned patterns, local variations
+  - 20% Physics: Nudges peak timing to afternoon
+
+Safety Bounds:
+  - Maximum deviation: ±8°C from current temperature in 24h
+  - Prevents unrealistic jumps from physics correction
+
+VALIDATION RESULTS
+==================
+Production Validation (2026-02-07):
+  ✓ Model loads successfully
+  ✓ 24h predictions generated (24 hourly values)
+  ✓ Peak timing: 14:00 (afternoon window 12-17h)
+  ✓ Continuity: Max hourly change 0.21°C (< 3.0°C threshold)
+  ✓ Amplitude: 1.6°C (within 1-8°C range)
+  ✓ Afternoon warmer than morning (23.7°C vs 22.8°C)
+
+Physical Realism Checklist:
+  ✓ Peak in afternoon (13-15:00 typical for tropical coastal)
+  ✓ Minimum pre-dawn (02-05:00)
+  ✓ Smooth transitions (no discontinuities)
+  ✓ Reasonable amplitude (1-2°C typical for coastal cities)
+
+CONSTRAINTS VERIFIED
+====================
+Architectural Constraints (ALL MET):
+  ✓ No model retraining
+  ✓ No dataset modification
+  ✓ No neural networks
+  ✓ No synthetic smoothing
+  ✓ Model A remains primary (80% dominant)
+  ✓ Model B unchanged (climatology-based, independent)
+
+Code Constraints:
+  ✓ No alternative code paths
+  ✓ No climatology anchoring (removed import)
+  ✓ Single production implementation
+  ✓ Comprehensive documentation
+
+PRODUCTION DEPLOYMENT
+=====================
+File: backend/app/services/ml_predictor.py
+Function: predict_next_24_hours(city)
+Status: LOCKED - do not modify without review
+
+Testing:
+  - Script: backend/debug/production_validation.py
+  - Validation: All 5 checks passed
+  - Run before any ml_predictor.py changes
+
+Visualization:
+  - Script: backend/debug/visualize_forecast.py
+  - Generates 24h forecast with ASCII graph
+  - Shows peak timing, amplitude, continuity
+
+Monitoring:
+  - Peak timing: Should stay in 12-17h range
+  - Amplitude: Should stay in 1-8°C range
+  - Continuity: No hourly jumps > 3°C
+  - If violated, investigate model/data issues
+
+MAINTENANCE NOTES
+=================
+When to Review This Implementation:
+  1. If adding Bangalore/Mumbai (different solar patterns)
+     - Adjust phase_shift for local solar noon
+     - Adjust amplitude for local diurnal range
+  
+  2. If retraining model with corrected data
+     - May reduce α from 0.20 to 0.10 or remove entirely
+     - Depends on whether new data fixes morning-peak bias
+  
+  3. If switching to live weather API (OpenWeather/Tomorrow.io)
+     - Live data may have different timing characteristics
+     - Validate diurnal pattern before reducing α
+
+What NOT to Change:
+  - Do not switch to climatology-based anchoring
+  - Do not increase α above 0.30 (model must remain dominant)
+  - Do not remove safety bounds (prevent unrealistic predictions)
+  - Do not add neural post-processing (violates constraints)
+
+TECHNICAL DOCUMENTATION
+========================
+Dependencies:
+  - joblib: Model loading (Chennai_gbm.joblib)
+  - numpy: Prediction computation
+  - math: sin, pi for physics function
+  - SQLAlchemy: Feature retrieval (weather_features table)
+
+Feature Vector (17 features):
+  Lags: temp_lag_1, 3, 6, 24, 72, 168
+  Aggregations: temp_mean_72h, temp_mean_168h
+  Trends: temp_trend_72h, temp_trend_168h
+  Deltas: delta_1h, delta_24h
+  Rolling: roll_mean_24h, roll_std_24h
+  Cyclic: sin_hour, cos_hour, sin_doy
+
+Model Specifications:
+  - Algorithm: GradientBoostingRegressor
+  - Estimators: 200
+  - Max depth: 5
+  - Learning rate: 0.05
+  - Training period: 2023-01-08 to 2025-05-27
+  - Validation period: 2025-05-27 to 2025-12-31
+  - MAE: 0.071°C
+
+SIGN-OFF
+========
+Implementation: Complete ✓
+Validation: Passed ✓
+Documentation: Complete ✓
+Production: Ready ✓
+
+Next Phase: API integration, frontend visualization, live weather feed
+
+--- END OF DOCUMENT ---

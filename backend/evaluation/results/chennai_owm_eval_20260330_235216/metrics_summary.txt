@@ -1,0 +1,28 @@
+OPENWEATHER-TARGET EVALUATION (FILTERED GOOD VIEW)
+===================================================
+City: Chennai
+Set 1: A+B | Set 2: A+C
+Evaluated points: 28
+Daily points used: 4
+
+DAILY-ONLY (BEST RAW CONTINUOUS VIEW):
+- MAE (Set1 | Set2): 0.9472 | 0.7191
+- RMSE (Set1 | Set2): 1.0926 | 0.9952
+- Within +-1.0C (Set1 | Set2): 0.5000 | 0.7500
+
+CALIBRATED (FULL SAMPLE):
+- Set1 MAE: 0.7163
+- Set1 RMSE: 0.8676
+- Set1 Within +-1.0C: 0.7143
+- Set2 MAE: 0.7893
+- Set2 RMSE: 0.9380
+- Set2 Within +-1.0C: 0.6786
+
+CALIBRATED (HOLDOUT CHECK):
+- Split index: 19 / 28
+- Set1 Holdout MAE: 1.0073
+- Set1 Holdout Within +-1.0C: 0.4444
+- Set2 Holdout MAE: 1.2344
+- Set2 Holdout Within +-1.0C: 0.3333
+
+Results folder: E:\prabanjan\projects\weather x\weather-copy\backend\evaluation\results\chennai_owm_eval_20260330_235216

@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "city": "Chennai",
+    "year": 2025,
+    "month": 2,
+    "target": "meteostat_daily_mean_temperature",
+    "samples": 28,
+    "set1": "(model_a_daily_mean + model_b_day1) / 2",
+    "set2": "(model_a_daily_mean + model_c_day1) / 2",
+    "generated_at": "2026-03-30T23:28:32.830285"
+  },
+  "set1_a_plus_b": {
+    "regression": {
+      "mae": 0.4561607142857148,
+      "rmse": 0.55669627184606,
+      "r2": 0.3801977094760237,
+      "mape": 0.017104597471416887,
+      "mean_bias": -0.29961309523809554
+    },
+    "classification": {
+      "threshold": 27.060416666666665,
+      "accuracy": 0.8214285714285714,
+      "precision": 0.6666666666666666,
+      "recall": 0.5714285714285714,
+      "f1": 0.6153846153846154,
+      "support_positive": 7,
+      "support_total": 28,
+      "roc_auc": 0.8877551020408163,
+      "pr_auc": 0.7749999999999999
+    },
+    "tolerance": {
+      "within_0_5c": 0.5357142857142857,
+      "within_1_0c": 0.9285714285714286,
+      "within_1_5c": 1.0,
+      "mean_abs_error": 0.4561607142857148,
+      "bias": -0.29961309523809554,
+      "bias_corrected_within_1_0c": 0.9642857142857143
+    }
+  },
+  "set2_a_plus_c": {
+    "regression": {
+      "mae": 0.4375297619047626,
+      "rmse": 0.5284247939838047,
+      "r2": 0.44155176247688,
+      "mape": 0.016410780667407105,
+      "mean_bias": -0.31800595238095297
+    },
+    "classification": {
+      "threshold": 27.060416666666665,
+      "accuracy": 0.8571428571428571,
+      "precision": 0.8,
+      "recall": 0.5714285714285714,
+      "f1": 0.6666666666666666,
+      "support_positive": 7,
+      "support_total": 28,
+      "roc_auc": 0.9251700680272108,
+      "pr_auc": 0.8373376623376623
+    },
+    "tolerance": {
+      "within_0_5c": 0.5,
+      "within_1_0c": 0.9642857142857143,
+      "within_1_5c": 1.0,
+      "mean_abs_error": 0.4375297619047626,
+      "bias": -0.31800595238095297,
+      "bias_corrected_within_1_0c": 1.0
+    }
+  }
+}

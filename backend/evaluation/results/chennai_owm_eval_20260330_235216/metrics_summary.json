@@ -1,0 +1,282 @@
+{
+  "meta": {
+    "city": "Chennai",
+    "generated_at": "2026-03-30T23:52:16.058990",
+    "test_target": "openweather_5day_forecast",
+    "set1": "model_a_plus_model_b",
+    "set2": "model_a_plus_model_c",
+    "alignment": {
+      "set1": {
+        "hour_points": 24,
+        "daily_points": 4,
+        "combined_points": 28
+      },
+      "set2": {
+        "hour_points": 24,
+        "daily_points": 4,
+        "combined_points": 28
+      },
+      "evaluated_points": 28,
+      "hourly_points": 24,
+      "daily_points": 4,
+      "calibration_split_index": 19,
+      "calibration_holdout_points": 9
+    }
+  },
+  "set1_a_plus_b": {
+    "combined": {
+      "regression": {
+        "mae": 2.2200468666451316,
+        "rmse": 2.555521228541079,
+        "r2": -3.2734739380602944,
+        "mape": 0.07869083105281793,
+        "mean_bias": 2.151921866645132
+      },
+      "tolerance": {
+        "within_0_5c": 0.10714285714285714,
+        "within_1_0c": 0.21428571428571427,
+        "within_1_5c": 0.32142857142857145,
+        "mean_abs_error": 2.2200468666451316,
+        "bias": 2.151921866645132,
+        "bias_corrected_within_0_5c": 0.32142857142857145,
+        "bias_corrected_within_1_0c": 0.5,
+        "bias_corrected_within_1_5c": 0.6428571428571429,
+        "bias_corrected_mean_abs_error": 1.1191145074182625
+      }
+    },
+    "hourly": {
+      "regression": {
+        "mae": 2.43219009441932,
+        "rmse": 2.7240006695818364,
+        "r2": -3.2934180421849515,
+        "mape": 0.08614853415448342,
+        "mean_bias": 2.43219009441932
+      },
+      "tolerance": {
+        "within_0_5c": 0.08333333333333333,
+        "within_1_0c": 0.16666666666666666,
+        "within_1_5c": 0.20833333333333334,
+        "mean_abs_error": 2.43219009441932,
+        "bias": 2.43219009441932,
+        "bias_corrected_within_0_5c": 0.20833333333333334,
+        "bias_corrected_within_1_0c": 0.5833333333333334,
+        "bias_corrected_within_1_5c": 0.6666666666666666,
+        "bias_corrected_mean_abs_error": 1.0408500512358212
+      }
+    },
+    "daily": {
+      "regression": {
+        "mae": 0.9471875000000001,
+        "rmse": 1.0925856302253838,
+        "r2": -2.880382974090114,
+        "mape": 0.03394461244282483,
+        "mean_bias": 0.47031250000000036
+      },
+      "tolerance": {
+        "within_0_5c": 0.25,
+        "within_1_0c": 0.5,
+        "within_1_5c": 1.0,
+        "mean_abs_error": 0.9471875000000001,
+        "bias": 0.47031250000000036,
+        "bias_corrected_within_0_5c": 0.25,
+        "bias_corrected_within_1_0c": 0.75,
+        "bias_corrected_within_1_5c": 1.0,
+        "bias_corrected_mean_abs_error": 0.919062499999999
+      }
+    },
+    "calibration": {
+      "params": {
+        "a": 0.5187467386854782,
+        "b": 12.547119931484273
+      },
+      "full_calibrated": {
+        "regression": {
+          "mae": 0.716339534290726,
+          "rmse": 0.8676032884024856,
+          "r2": 0.5074339752236536,
+          "mape": 0.02551659858769857,
+          "mean_bias": 0.12652116936092841
+        },
+        "tolerance": {
+          "within_0_5c": 0.39285714285714285,
+          "within_1_0c": 0.7142857142857143,
+          "within_1_5c": 0.8928571428571429,
+          "mean_abs_error": 0.716339534290726,
+          "bias": 0.12652116936092841,
+          "bias_corrected_within_0_5c": 0.35714285714285715,
+          "bias_corrected_within_1_0c": 0.75,
+          "bias_corrected_within_1_5c": 0.9642857142857143,
+          "bias_corrected_mean_abs_error": 0.7231561880715878
+        }
+      },
+      "holdout_raw": {
+        "regression": {
+          "mae": 2.2329586520000735,
+          "rmse": 2.5945797429551707,
+          "r2": -14.533187647395524,
+          "mape": 0.082109499328961,
+          "mean_bias": 2.0210142075556288
+        },
+        "tolerance": {
+          "within_0_5c": 0.1111111111111111,
+          "within_1_0c": 0.2222222222222222,
+          "within_1_5c": 0.4444444444444444,
+          "mean_abs_error": 2.2329586520000735,
+          "bias": 2.0210142075556288,
+          "bias_corrected_within_0_5c": 0.1111111111111111,
+          "bias_corrected_within_1_0c": 0.4444444444444444,
+          "bias_corrected_within_1_5c": 0.5555555555555556,
+          "bias_corrected_mean_abs_error": 1.3784015178272258
+        }
+      },
+      "holdout_calibrated": {
+        "regression": {
+          "mae": 1.0073252283176022,
+          "rmse": 1.174971902651826,
+          "r2": -2.185528576590123,
+          "mape": 0.036648824045898594,
+          "mean_bias": 0.3936214157895187
+        },
+        "tolerance": {
+          "within_0_5c": 0.2222222222222222,
+          "within_1_0c": 0.4444444444444444,
+          "within_1_5c": 0.6666666666666666,
+          "mean_abs_error": 1.0073252283176022,
+          "bias": 0.3936214157895187,
+          "bias_corrected_within_0_5c": 0.2222222222222222,
+          "bias_corrected_within_1_0c": 0.5555555555555556,
+          "bias_corrected_within_1_5c": 0.8888888888888888,
+          "bias_corrected_mean_abs_error": 0.9566810673567971
+        }
+      }
+    }
+  },
+  "set2_a_plus_c": {
+    "combined": {
+      "regression": {
+        "mae": 2.187457580930846,
+        "rmse": 2.5498304214389504,
+        "r2": -3.254462209731239,
+        "mape": 0.07744429582816259,
+        "mean_bias": 2.006921866645132
+      },
+      "tolerance": {
+        "within_0_5c": 0.14285714285714285,
+        "within_1_0c": 0.25,
+        "within_1_5c": 0.2857142857142857,
+        "mean_abs_error": 2.187457580930846,
+        "bias": 2.006921866645132,
+        "bias_corrected_within_0_5c": 0.32142857142857145,
+        "bias_corrected_within_1_0c": 0.42857142857142855,
+        "bias_corrected_within_1_5c": 0.5714285714285714,
+        "bias_corrected_mean_abs_error": 1.2434002217039766
+      }
+    },
+    "hourly": {
+      "regression": {
+        "mae": 2.43219009441932,
+        "rmse": 2.7240006695818364,
+        "r2": -3.2934180421849515,
+        "mape": 0.08614853415448342,
+        "mean_bias": 2.43219009441932
+      },
+      "tolerance": {
+        "within_0_5c": 0.08333333333333333,
+        "within_1_0c": 0.16666666666666666,
+        "within_1_5c": 0.20833333333333334,
+        "mean_abs_error": 2.43219009441932,
+        "bias": 2.43219009441932,
+        "bias_corrected_within_0_5c": 0.20833333333333334,
+        "bias_corrected_within_1_0c": 0.5833333333333334,
+        "bias_corrected_within_1_5c": 0.6666666666666666,
+        "bias_corrected_mean_abs_error": 1.0408500512358212
+      }
+    },
+    "daily": {
+      "regression": {
+        "mae": 0.7190624999999997,
+        "rmse": 0.995172527441849,
+        "r2": -2.219292061074469,
+        "mape": 0.025218865870237618,
+        "mean_bias": -0.5446874999999984
+      },
+      "tolerance": {
+        "within_0_5c": 0.5,
+        "within_1_0c": 0.75,
+        "within_1_5c": 0.75,
+        "mean_abs_error": 0.7190624999999997,
+        "bias": -0.5446874999999984,
+        "bias_corrected_within_0_5c": 0.25,
+        "bias_corrected_within_1_0c": 0.75,
+        "bias_corrected_within_1_5c": 1.0,
+        "bias_corrected_mean_abs_error": 0.7190624999999997
+      }
+    },
+    "calibration": {
+      "params": {
+        "a": 0.5187467386854782,
+        "b": 12.547119931484273
+      },
+      "full_calibrated": {
+        "regression": {
+          "mae": 0.7893372387980584,
+          "rmse": 0.9379787421559443,
+          "r2": 0.42428430985334586,
+          "mape": 0.028129578838847154,
+          "mean_bias": 0.05130289225153436
+        },
+        "tolerance": {
+          "within_0_5c": 0.32142857142857145,
+          "within_1_0c": 0.6785714285714286,
+          "within_1_5c": 0.8928571428571429,
+          "mean_abs_error": 0.7893372387980584,
+          "bias": 0.05130289225153436,
+          "bias_corrected_within_0_5c": 0.2857142857142857,
+          "bias_corrected_within_1_0c": 0.7142857142857143,
+          "bias_corrected_within_1_5c": 0.9642857142857143,
+          "bias_corrected_mean_abs_error": 0.7930017311017394
+        }
+      },
+      "holdout_raw": {
+        "regression": {
+          "mae": 2.1315697631111843,
+          "rmse": 2.577102084447651,
+          "r2": -14.324622570207822,
+          "mape": 0.07823138974114446,
+          "mean_bias": 1.5699030964445184
+        },
+        "tolerance": {
+          "within_0_5c": 0.2222222222222222,
+          "within_1_0c": 0.3333333333333333,
+          "within_1_5c": 0.3333333333333333,
+          "mean_abs_error": 2.1315697631111843,
+          "bias": 1.5699030964445184,
+          "bias_corrected_within_0_5c": 0.0,
+          "bias_corrected_within_1_0c": 0.1111111111111111,
+          "bias_corrected_within_1_5c": 0.4444444444444444,
+          "bias_corrected_mean_abs_error": 1.8796360857284593
+        }
+      },
+      "holdout_calibrated": {
+        "regression": {
+          "mae": 1.2344291978959694,
+          "rmse": 1.332622855687285,
+          "r2": -3.0977084729115756,
+          "mape": 0.04477809593836086,
+          "mean_bias": 0.15960899811584836
+        },
+        "tolerance": {
+          "within_0_5c": 0.0,
+          "within_1_0c": 0.3333333333333333,
+          "within_1_5c": 0.6666666666666666,
+          "mean_abs_error": 1.2344291978959694,
+          "bias": 0.15960899811584836,
+          "bias_corrected_within_0_5c": 0.0,
+          "bias_corrected_within_1_0c": 0.4444444444444444,
+          "bias_corrected_within_1_5c": 0.8888888888888888,
+          "bias_corrected_mean_abs_error": 1.2166948647719862
+        }
+      }
+    }
+  }
+}

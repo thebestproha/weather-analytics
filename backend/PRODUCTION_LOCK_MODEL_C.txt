@@ -1,0 +1,45 @@
+"""
+PRODUCTION LOCK - MODEL C (TRAINED + CALIBRATED + STABILIZED)
+==============================================================
+
+DECISION: Freeze current Model C artifact + inference behavior
+DATE: 2026-03-30
+STATUS: Locked for production validation
+
+WHAT IS FROZEN
+==============
+1) Trained artifact:
+   backend/app/models/Chennai_model_c_et.joblib
+
+2) Inference path:
+   backend/app/services/models/model_c.py
+   - Uses trained artifact first
+   - Applies learned horizon-wise bias correction
+   - Applies 60% soft anchor to Model B baseline for stability
+   - Falls back to heuristic only if artifact is unavailable
+
+3) Trainer guard:
+   backend/app/services/train_model_c.py
+   - Retraining is BLOCKED when this lock file exists
+   - Override only with explicit force:
+     - CLI: --force
+     - Env: MODEL_C_FORCE_TRAIN=1
+
+FROZEN ARTIFACT FINGERPRINT (CHENNAI)
+=====================================
+trained_at: 2026-03-30T17:01:59.591397+00:00
+sha256: 05a78d17cd02cf3e6ec02a2a85d372d465d13782c6aa905b3af264060adf71cc
+
+validation metrics:
+- mae_overall: 0.9986727183995457
+- mae_day_1: 0.7096581595634441
+- mae_day_7: 1.1381640569716511
+
+bias_by_horizon (D1..D7):
+[0.1285968927217363, 0.1811691970366701, 0.19891013747680047, 0.20814730340842083, 0.21994727820237261, 0.17830414738407196, 0.1889255934823279]
+
+OPERATIONS NOTE
+===============
+Do not retrain Model C during normal runs.
+If retraining is needed later, remove/revise this lock only after review.
+"""

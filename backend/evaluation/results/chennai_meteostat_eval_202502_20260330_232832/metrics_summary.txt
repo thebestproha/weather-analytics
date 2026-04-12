@@ -1,0 +1,45 @@
+METEOSTAT MONTHLY BACKTEST (SET1 VS SET2)
+=========================================
+City: Chennai
+Month: 2025-02
+Samples: 28 days
+
+Set1 (A+B) Regression:
+- MAE: 0.4562
+- RMSE: 0.5567
+- R2: 0.3802
+- MAPE: 0.0171
+- Mean bias: -0.2996
+
+Set1 (A+B) Classification:
+- Precision: 0.6667
+- Recall: 0.5714
+- F1: 0.6154
+- Accuracy: 0.8214
+- ROC-AUC: 0.8877551020408163
+- PR-AUC: 0.7749999999999999
+
+Set1 (A+B) Tolerance:
+- Within +-1.0C: 0.9286
+- Bias corrected within +-1.0C: 0.9643
+
+Set2 (A+C) Regression:
+- MAE: 0.4375
+- RMSE: 0.5284
+- R2: 0.4416
+- MAPE: 0.0164
+- Mean bias: -0.3180
+
+Set2 (A+C) Classification:
+- Precision: 0.8000
+- Recall: 0.5714
+- F1: 0.6667
+- Accuracy: 0.8571
+- ROC-AUC: 0.9251700680272108
+- PR-AUC: 0.8373376623376623
+
+Set2 (A+C) Tolerance:
+- Within +-1.0C: 0.9643
+- Bias corrected within +-1.0C: 1.0000
+
+Results folder: E:\prabanjan\projects\weather x\weather-copy\backend\evaluation\results\chennai_meteostat_eval_202502_20260330_232832
