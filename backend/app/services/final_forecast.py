@@ -36,6 +36,86 @@ def _daily_flat_from_temp(temp: float, days: int = 7):
     }
 
 
+def _normalize_hourly_24(hourly, start_hour: int):
+    if not isinstance(hourly, list) or len(hourly) == 0:
+        return [
+            {
+                "hour": f"{(start_hour + i) % 24:02d}:00",
+                "temp": 0.0,
+            }
+            for i in range(24)
+        ]
+
+    if len(hourly) == 24:
+        return hourly
+
+    base_temps = []
+    for row in hourly:
+        try:
+            base_temps.append(float((row or {}).get("temp")))
+        except Exception:
+            pass
+
+    if not base_temps:
+        base_temps = [0.0]
+
+    if len(base_temps) == 1:
+        interpolated = [base_temps[0] for _ in range(24)]
+    else:
+        interpolated = []
+        for i in range(24):
+            pos = (i * (len(base_temps) - 1)) / 23.0
+            lo = int(pos)
+            hi = min(len(base_temps) - 1, lo + 1)
+            w = pos - lo
+            temp = (1.0 - w) * base_temps[lo] + w * base_temps[hi]
+            interpolated.append(round(float(temp), 2))
+
+    return [
+        {
+            "hour": f"{(start_hour + i) % 24:02d}:00",
+            "temp": float(interpolated[i]),
+        }
+        for i in range(24)
+    ]
+
+
+def _normalize_daily_7(daily, anchor_temp: float):
+    if not isinstance(daily, dict):
+        return _daily_flat_from_temp(anchor_temp)
+
+    mean = [float(v) for v in (daily.get("mean") or []) if v is not None]
+    upper = [float(v) for v in (daily.get("upper") or []) if v is not None]
+    lower = [float(v) for v in (daily.get("lower") or []) if v is not None]
+
+    if not mean:
+        return _daily_flat_from_temp(anchor_temp)
+
+    # Extend mean to 7 values with damped continuation of recent trend.
+    while len(mean) < 7:
+        if len(mean) >= 2:
+            step = (mean[-1] - mean[-2]) * 0.7
+        else:
+            step = 0.0
+        mean.append(round(mean[-1] + step, 2))
+
+    mean = mean[:7]
+
+    if len(upper) < len(mean):
+        upper.extend([mean[min(i, len(mean) - 1)] + 1.5 for i in range(len(upper), len(mean))])
+    if len(lower) < len(mean):
+        lower.extend([mean[min(i, len(mean) - 1)] - 1.5 for i in range(len(lower), len(mean))])
+
+    upper = [round(float(v), 2) for v in upper[:7]]
+    lower = [round(float(v), 2) for v in lower[:7]]
+
+    return {
+        "mean": [round(float(v), 2) for v in mean],
+        "upper": upper,
+        "lower": lower,
+    }
+
+
 def get_final_forecast(city: str, db, long_model: str = "b", compare_long_models: bool = False):
     """
     Final forecast API endpoint - returns locked schema
@@ -119,6 +199,8 @@ def get_final_forecast(city: str, db, long_model: str = "b", compare_long_models
                 for i in range(8)
             ]
 
+    hourly = _normalize_hourly_24(hourly, now.hour)
+
     # -------------------------------
     # 3. LONG-TERM MODEL: DAILY (7d)
     # -------------------------------
@@ -136,6 +218,8 @@ def get_final_forecast(city: str, db, long_model: str = "b", compare_long_models
         else:
             daily_forecast = _daily_flat_from_temp(current_temp)
 
+    daily_forecast = _normalize_daily_7(daily_forecast, current_temp)
+
     compare_payload = None
     if compare_long_models:
         model_b = get_long_term_model("b")
@@ -147,6 +231,9 @@ def get_final_forecast(city: str, db, long_model: str = "b", compare_long_models
             daily_b = daily_forecast
         if not _has_daily_payload(daily_c):
             daily_c = daily_forecast
+
+        daily_b = _normalize_daily_7(daily_b, current_temp)
+        daily_c = _normalize_daily_7(daily_c, current_temp)
 
         diff = [
             round(c - b, 2)
