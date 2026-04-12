@@ -116,6 +116,10 @@ pytest backend/tests -q
 
 This repo includes a Render blueprint.
 
+Live deployment:
+
+- https://weather-analytics-5bvt.onrender.com
+
 Files:
 
 - `render.yaml`
@@ -143,6 +147,25 @@ Optional variables:
 - `WEATHERAPI_KEY`
 - `TOMORROW_API_KEY`
 - `PYTHON_VERSION` set to `3.11.9`
+
+Cloud route notes:
+
+- Root UI wrapper: `/`
+- Health check: `/health`
+- Set 1 page: `/app/set1`
+- Set 2 page: `/app/set2`
+- Compare page: `/app/compare`
+- OpenWeather compare API used by compare page: `/weather/openweather/compare/{city}`
+
+Quick verify (replace city as needed):
+
+```text
+https://weather-analytics-5bvt.onrender.com/
+https://weather-analytics-5bvt.onrender.com/health
+https://weather-analytics-5bvt.onrender.com/weather/final/Chennai?long_model=b
+https://weather-analytics-5bvt.onrender.com/weather/final/Chennai?long_model=c
+https://weather-analytics-5bvt.onrender.com/weather/openweather/compare/Chennai
+```
 
 ## Security Notes
 
