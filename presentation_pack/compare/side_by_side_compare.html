@@ -182,8 +182,10 @@
   </div>
 
   <script>
-    const API = "http://127.0.0.1:8000/weather/final";
-    const OPENWEATHER_COMPARE_API = "http://127.0.0.1:8000/weather/openweather/compare";
+    const IS_LOCAL_COMPARE = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+    const API_ORIGIN = IS_LOCAL_COMPARE ? "http://127.0.0.1:8000" : window.location.origin;
+    const API = `${API_ORIGIN}/weather/final`;
+    const OPENWEATHER_COMPARE_API = `${API_ORIGIN}/weather/openweather/compare`;
     const PAGE_PARAMS = new URLSearchParams(window.location.search);
     const OPENWEATHER_KEY = (
       window.__OPENWEATHER_KEY ||

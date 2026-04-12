@@ -14,9 +14,16 @@ app = FastAPI(title="Weather Analytics System")
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
 ASSETS_DIR = STATIC_DIR / "assets"
+REPO_ROOT = APP_DIR.parent.parent
+FRONTEND_DIR = REPO_ROOT / "frontend"
+COMPARE_DIR = REPO_ROOT / "weather_model_b_ml_clone"
 
 if ASSETS_DIR.exists():
     app.mount("/assets", StaticFiles(directory=str(ASSETS_DIR)), name="assets")
+if FRONTEND_DIR.exists():
+    app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend")
+if COMPARE_DIR.exists():
+    app.mount("/compare-static", StaticFiles(directory=str(COMPARE_DIR)), name="compare-static")
 
 Base.metadata.create_all(bind=engine)
 

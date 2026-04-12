@@ -1,8 +1,10 @@
 // API Configuration
-const API_BASE = "http://127.0.0.1:8000/weather/final";
-const TRENDS_BASE = "http://127.0.0.1:8000/weather/trends";
-const TRENDS_MODEL_BASE = "http://127.0.0.1:8000/weather/trends/model";
-const OPENWEATHER_TODAY_BASE = "http://127.0.0.1:8000/weather/openweather/today";
+const IS_LOCAL_FRONTEND = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+const API_ORIGIN = IS_LOCAL_FRONTEND ? "http://127.0.0.1:8000" : window.location.origin;
+const API_BASE = `${API_ORIGIN}/weather/final`;
+const TRENDS_BASE = `${API_ORIGIN}/weather/trends`;
+const TRENDS_MODEL_BASE = `${API_ORIGIN}/weather/trends/model`;
+const OPENWEATHER_TODAY_BASE = `${API_ORIGIN}/weather/openweather/today`;
 const URL_PARAMS = new URLSearchParams(window.location.search);
 const SELECTED_LONG_MODEL = (
   window.__LONG_MODEL || URL_PARAMS.get("long_model") || "b"
