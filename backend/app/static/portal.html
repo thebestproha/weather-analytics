@@ -11,8 +11,8 @@
     <div class="portal-nav">
       <div class="portal-tabs">
         <button class="active" data-view="set1">Set 1</button>
-        <button data-view="set2">Set 2</button>
         <button data-view="compare">Compare</button>
+        <button data-view="set2">Set 2</button>
       </div>
     </div>
 
@@ -28,13 +28,13 @@
     const views = isLocal
       ? {
           set1: "http://127.0.0.1:5173/index.html",
-          set2: "http://127.0.0.1:5174/index_model_c.html",
           compare: "http://127.0.0.1:5180/side_by_side_compare.html",
+          set2: "http://127.0.0.1:5174/index_model_c.html",
         }
       : {
           set1: "/frontend/index.html",
-          set2: "/frontend/index_model_c.html",
           compare: "/compare-static/side_by_side_compare.html",
+          set2: "/frontend/index_model_c.html",
         };
 
     function withCacheBust(url) {
