@@ -53,14 +53,14 @@ def health():
 
 @app.get("/app/set1")
 def app_set1():
-    return FileResponse(STATIC_DIR / "set1.html")
+    return FileResponse(FRONTEND_DIR / "index.html")
 
 
 @app.get("/app/set2")
 def app_set2():
-    return FileResponse(STATIC_DIR / "set2.html")
+    return FileResponse(FRONTEND_DIR / "index_model_c.html")
 
 
 @app.get("/app/compare")
 def app_compare():
-    return FileResponse(STATIC_DIR / "compare.html")
+    return FileResponse(COMPARE_DIR / "side_by_side_compare.html")
