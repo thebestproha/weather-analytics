@@ -10,26 +10,51 @@
   <div class="portal-shell">
     <div class="portal-nav">
       <div class="portal-tabs">
-        <button class="active" data-src="/app/set1">Set 1</button>
-        <button data-src="/app/set2">Set 2</button>
-        <button data-src="/app/compare">Compare</button>
+        <button class="active" data-view="set1">Set 1</button>
+        <button data-view="set2">Set 2</button>
+        <button data-view="compare">Compare</button>
       </div>
     </div>
 
-    <iframe id="portalFrame" class="portal-frame" src="/app/set1" title="Weather View"></iframe>
+    <iframe id="portalFrame" class="portal-frame" title="Weather View"></iframe>
   </div>
 
   <script>
     const frame = document.getElementById("portalFrame");
     const buttons = Array.from(document.querySelectorAll(".portal-tabs button"));
+    const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+    const cacheBust = Date.now();
+
+    const views = isLocal
+      ? {
+          set1: "http://127.0.0.1:5173/index.html",
+          set2: "http://127.0.0.1:5174/index_model_c.html",
+          compare: "http://127.0.0.1:5180/side_by_side_compare.html",
+        }
+      : {
+          set1: "/app/set1",
+          set2: "/app/set2",
+          compare: "/app/compare",
+        };
+
+    function withCacheBust(url) {
+      const sep = url.includes("?") ? "&" : "?";
+      return `${url}${sep}cb=${cacheBust}`;
+    }
+
+    function selectView(viewKey) {
+      buttons.forEach((b) => b.classList.toggle("active", b.getAttribute("data-view") === viewKey));
+      const target = views[viewKey] || views.set1;
+      frame.src = withCacheBust(target);
+    }
 
     buttons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        buttons.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        frame.src = btn.getAttribute("data-src");
+        selectView(btn.getAttribute("data-view"));
       });
     });
+
+    selectView("set1");
   </script>
 </body>
 </html>

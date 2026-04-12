@@ -183,6 +183,7 @@
 
   <script>
     const API = "http://127.0.0.1:8000/weather/final";
+    const OPENWEATHER_COMPARE_API = "http://127.0.0.1:8000/weather/openweather/compare";
     const PAGE_PARAMS = new URLSearchParams(window.location.search);
     const OPENWEATHER_KEY = (
       window.__OPENWEATHER_KEY ||
@@ -402,7 +403,7 @@
       };
     }
 
-    async function fetchOpenWeather(city) {
+    async function fetchOpenWeatherDirect(city) {
       if (!OPENWEATHER_KEY) {
         throw new Error("OpenWeather key not configured");
       }
@@ -428,6 +429,23 @@
         hourly,
         daily,
       };
+    }
+
+    async function fetchOpenWeather(city) {
+      try {
+        const resp = await fetch(`${OPENWEATHER_COMPARE_API}/${encodeURIComponent(city)}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          const meanLen = (((data || {}).daily || {}).mean || []).length;
+          if (meanLen > 0) {
+            return data;
+          }
+        }
+      } catch (_err) {
+        // Fall through to direct client-key mode.
+      }
+
+      return fetchOpenWeatherDirect(city);
     }
 
     async function load() {
@@ -461,7 +479,12 @@
         document.getElementById("rightMeta").textContent = newModel.meta.model;
         document.getElementById("rightTitle").textContent = "3) Set 2";
 
-        const horizon = openWeather.daily.mean.length;
+        const openWeatherHorizon = ((openWeather || {}).daily || {}).mean
+          ? openWeather.daily.mean.length
+          : 0;
+        const oldHorizon = Math.max(0, ((oldModel.daily || {}).mean || []).length - 1);
+        const newHorizon = Math.max(0, ((newModel.daily || {}).mean || []).length - 1);
+        const horizon = Math.min(openWeatherHorizon, oldHorizon, newHorizon);
         if (!horizon) {
           showComingSoonComparison(city, openWeather);
           status.textContent = `Coming soon for ${city}: Set 1/Set 2 model support is being added.`;
@@ -484,9 +507,10 @@
         midChart = drawChart("midHourly", midChart, openWeather.hourly, "#ea580c");
         rightChart = drawChart("rightHourly", rightChart, newModel.hourly, "#d946ef");
 
-        renderDays("leftDays", oldTomorrow, openWeather.daily.labels);
-        renderDays("midDays", openWeather.daily, openWeather.daily.labels);
-        renderDays("rightDays", newTomorrow, openWeather.daily.labels);
+        const labels = (openWeather.daily.labels || []).slice(0, horizon);
+        renderDays("leftDays", oldTomorrow, labels);
+        renderDays("midDays", openWeather.daily, labels);
+        renderDays("rightDays", newTomorrow, labels);
 
         renderDiff({ daily: oldTomorrow }, { daily: newTomorrow }, openWeather);
 
