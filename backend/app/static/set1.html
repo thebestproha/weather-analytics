@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather - Set 1</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Weather (Set 1)</h1>
+      <div class="header-controls">
+        <div class="mode-switch">
+          <a class="active" href="/app/set1">Set 1</a>
+          <a href="/app/set2">Set 2</a>
+          <a href="/app/compare">3-Way Compare</a>
+        </div>
+        <select id="citySelect">
+          <option value="Chennai">Chennai</option>
+          <option value="Delhi">Delhi</option>
+          <option value="Mumbai">Mumbai</option>
+          <option value="Bengaluru">Bengaluru</option>
+          <option value="Hyderabad">Hyderabad</option>
+          <option value="Kolkata">Kolkata</option>
+          <option value="Pune">Pune</option>
+          <option value="Ahmedabad">Ahmedabad</option>
+          <option value="Jaipur">Jaipur</option>
+          <option value="Kochi">Kochi</option>
+          <option value="Trivandrum">Trivandrum</option>
+        </select>
+      </div>
+    </header>
+
+    <section class="current">
+      <div class="location">
+        <div class="city-name" id="cityName">-</div>
+        <div class="timestamp" id="timestamp">-</div>
+      </div>
+      <div class="temp">
+        <span id="currentTemp">-</span><span class="unit">degC</span>
+      </div>
+    </section>
+
+    <section class="chart-section">
+      <h2>24-Hour Forecast</h2>
+      <div class="chart-container">
+        <canvas id="hourlyChart"></canvas>
+      </div>
+    </section>
+
+    <section class="daily-section">
+      <h2>7-Day Forecast</h2>
+      <div class="daily-grid" id="dailyGrid"></div>
+    </section>
+
+    <section class="trends-section">
+      <h2>Climate and Past Trends</h2>
+      <div class="trends-grid">
+        <div class="trends-card">
+          <h3>Same-Day History</h3>
+          <div id="sameDayList" class="same-day-list"></div>
+        </div>
+        <div class="trends-card">
+          <h3>Monthly Climatology</h3>
+          <div class="chart-container small">
+            <canvas id="monthlyChart"></canvas>
+          </div>
+        </div>
+        <div class="trends-card">
+          <h3>Yearly Trend</h3>
+          <div class="chart-container small">
+            <canvas id="yearlyChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/assets/app.js"></script>
+</body>
+</html>

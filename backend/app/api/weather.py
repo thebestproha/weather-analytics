@@ -17,7 +17,7 @@ from app.services.aggregation import (
     get_monthly_climatology,
     get_yearly_trend,
 )
-from app.services.weather_fetcher import fetch_openweather_today_summary
+from app.services.weather_fetcher import fetch_openweather_today_summary, fetch_openweather_compare
 
 router = APIRouter(prefix="/weather", tags=["weather"])
 
@@ -198,6 +198,25 @@ def openweather_today(city: str):
             "mean": None,
             "upper": None,
             "lower": None,
+        }
+
+
+@router.get("/openweather/compare/{city}")
+def openweather_compare(city: str):
+    """Returns OpenWeather compare payload (current, hourly, daily)."""
+    try:
+        return fetch_openweather_compare(city)
+    except Exception:
+        return {
+            "city": city,
+            "current": {"temp": None},
+            "hourly": [],
+            "daily": {
+                "mean": [],
+                "upper": [],
+                "lower": [],
+                "labels": [],
+            },
         }
 
 

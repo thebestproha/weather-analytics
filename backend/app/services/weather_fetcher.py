@@ -118,6 +118,83 @@ def fetch_openweather_today_summary(city: str):
         "lower": round(min(temps), 2),
     }
 
+
+def fetch_openweather_compare(city: str):
+    """Fetches OpenWeather forecast and returns compare-page friendly payload."""
+    _require_openweather_key()
+    lat, lon = _resolve_city_coords(city)
+
+    url = (
+        f"{FORECAST_URL}"
+        f"?lat={lat}&lon={lon}&units=metric&appid={OPENWEATHER_KEY}"
+    )
+
+    r = requests.get(url, timeout=10)
+    r.raise_for_status()
+    payload = r.json()
+
+    entries = payload.get("list", [])
+    hourly = []
+    for item in entries[:8]:
+        dt_txt = item.get("dt_txt") or ""
+        hour_label = dt_txt[11:16] if len(dt_txt) >= 16 else "--:--"
+        temp = item.get("main", {}).get("temp")
+        if temp is not None:
+            hourly.append({"hour": hour_label, "temp": float(temp)})
+
+    by_day = {}
+    for item in entries:
+        dt_txt = item.get("dt_txt")
+        if not isinstance(dt_txt, str) or len(dt_txt) < 10:
+            continue
+        day_key = dt_txt[:10]
+        temp = item.get("main", {}).get("temp")
+        if temp is None:
+            continue
+        by_day.setdefault(day_key, []).append(float(temp))
+
+    today_key = datetime.now().strftime("%Y-%m-%d")
+    future_keys = [
+        key
+        for key in sorted(by_day.keys())
+        if key > today_key and len(by_day.get(key, [])) >= 8
+    ][:5]
+
+    mean = []
+    upper = []
+    lower = []
+    labels = []
+    for idx, key in enumerate(future_keys):
+        vals = by_day[key]
+        avg = sum(vals) / len(vals)
+        weekday = datetime.strptime(key, "%Y-%m-%d").strftime("%a")
+        label = f"D{idx + 1} {weekday}"
+        if idx == 0:
+            label += " (Tomorrow)"
+
+        mean.append(round(avg, 2))
+        upper.append(round(max(vals), 2))
+        lower.append(round(min(vals), 2))
+        labels.append(label)
+
+    current_temp = None
+    if entries:
+        first_temp = entries[0].get("main", {}).get("temp")
+        if first_temp is not None:
+            current_temp = float(first_temp)
+
+    return {
+        "city": city,
+        "current": {"temp": current_temp},
+        "hourly": hourly,
+        "daily": {
+            "mean": mean,
+            "upper": upper,
+            "lower": lower,
+            "labels": labels,
+        },
+    }
+
 # Backward compatibility (do not remove)
 def fetch_and_store_current(city: str):
     return fetch_openweather_and_store(city)

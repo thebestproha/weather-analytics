@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather Analytics</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+  <div class="portal">
+    <div class="portal-header">
+      <div>
+        <div class="portal-title">Weather Analytics</div>
+        <div class="portal-sub">Switch between Set 1, Set 2, and 3-way comparison.</div>
+      </div>
+      <div class="portal-tabs">
+        <button class="active" data-src="/app/set1">Set 1 Forecast</button>
+        <button data-src="/app/set2">Set 2 Forecast</button>
+        <button data-src="/app/compare">3-Way Compare</button>
+      </div>
+    </div>
+
+    <iframe id="portalFrame" class="portal-frame" src="/app/set1" title="Weather Analytics View"></iframe>
+  </div>
+
+  <script>
+    const frame = document.getElementById("portalFrame");
+    const buttons = Array.from(document.querySelectorAll(".portal-tabs button"));
+
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        buttons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        frame.src = btn.getAttribute("data-src");
+      });
+    });
+  </script>
+</body>
+</html>
