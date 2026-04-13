@@ -9,10 +9,14 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 def _resolve_db_path():
     override = (os.getenv("WEATHER_DB_PATH") or "").strip()
+    default_path = BASE_DIR / "weather.db"
+
     if override:
         raw = Path(override)
         if raw.is_absolute():
-            return raw
+            if raw.exists():
+                return raw
+            return default_path
 
         candidates = [
             BASE_DIR / raw,
@@ -23,10 +27,10 @@ def _resolve_db_path():
             if candidate.exists():
                 return candidate
 
-        # Fallback to historical behavior if no candidate exists yet.
-        return BASE_DIR / raw
+        # Safety fallback: avoid creating a fresh empty DB from a bad env value.
+        return default_path
 
-    return BASE_DIR / "weather.db"
+    return default_path
 
 
 DB_PATH = _resolve_db_path()
