@@ -10,6 +10,7 @@ node_modules/
 presentation_pack.zip
 backend/app/models/*_model_c_et.joblib
 presentation_pack/backend/app/models/*_model_c_et.joblib
+!backend/app/models/Chennai_model_c_et.joblib
 npm-debug.log*
 yarn-error.log*
 

@@ -10,6 +10,6 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: WEATHER_DB_PATH
-        value: backend/replica/weather.snapshot.sqlite
+        value: replica/weather.snapshot.sqlite
       - key: DISABLE_SCHEDULER
         value: "true"
