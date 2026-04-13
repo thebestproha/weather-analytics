@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta
+from functools import lru_cache
 from math import pi, sin
 
 import joblib
@@ -14,6 +15,11 @@ MODEL_DIR = os.path.abspath(
 )
 MODEL_SUFFIX = "_model_c_et.joblib"
 HISTORY_DAYS = 30
+
+
+@lru_cache(maxsize=16)
+def _load_model_c_artifact(model_path: str):
+    return joblib.load(model_path)
 
 
 def _mean(values):
@@ -176,7 +182,7 @@ def forecast_daily_model_c(city: str, db):
     model_path = os.path.join(MODEL_DIR, f"{city}{MODEL_SUFFIX}")
 
     try:
-        artifact = joblib.load(model_path)
+        artifact = _load_model_c_artifact(model_path)
 
         daily = get_daily_weather(city, db)
         if len(daily) < HISTORY_DAYS:
