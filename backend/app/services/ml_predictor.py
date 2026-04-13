@@ -1,6 +1,7 @@
 import joblib
 import numpy as np
 from datetime import datetime, timedelta
+from functools import lru_cache
 from math import sin, cos, pi
 from types import SimpleNamespace
 from app.db.deps import get_db
@@ -153,6 +154,7 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
+@lru_cache(maxsize=16)
 def _model(city):
     model_path = os.path.join(BASE_DIR, "models", f"{city}_gbm.joblib")
     return joblib.load(model_path)
