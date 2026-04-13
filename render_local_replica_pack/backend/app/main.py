@@ -58,9 +58,9 @@ def app_set1():
 
 @app.get("/app/set2")
 def app_set2():
-    return FileResponse(FRONTEND_DIR / "index_model_c.html")
+    return FileResponse(FRONTEND_DIR / "index.html")
 
 
 @app.get("/app/compare")
 def app_compare():
-    return FileResponse(COMPARE_DIR / "side_by_side_compare.html")
+    return FileResponse(FRONTEND_DIR / "index.html")
