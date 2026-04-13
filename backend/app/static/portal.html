@@ -22,20 +22,13 @@
   <script>
     const frame = document.getElementById("portalFrame");
     const buttons = Array.from(document.querySelectorAll(".portal-tabs button"));
-    const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
     const cacheBust = Date.now();
 
-    const views = isLocal
-      ? {
-          set1: "http://127.0.0.1:5173/index.html",
-          compare: "http://127.0.0.1:5180/side_by_side_compare.html",
-          set2: "http://127.0.0.1:5174/index_model_c.html",
-        }
-      : {
-          set1: "/frontend/index.html",
-          compare: "/compare-static/side_by_side_compare.html",
-          set2: "/frontend/index_model_c.html",
-        };
+    const views = {
+      set1: "/frontend/index.html",
+      compare: "/compare-static/side_by_side_compare.html",
+      set2: "/frontend/index_model_c.html",
+    };
 
     function withCacheBust(url) {
       const sep = url.includes("?") ? "&" : "?";
