@@ -1,9 +1,11 @@
 import joblib
 import numpy as np
-from datetime import datetime
-from math import sin, pi
+from datetime import datetime, timedelta
+from math import sin, cos, pi
+from types import SimpleNamespace
 from app.db.deps import get_db
 from app.db.database import SessionLocal
+from app.models.weather import Weather
 from app.models.weather_features import WeatherFeatures
 from app.services.city_profiles import CITY_PROFILE
 
@@ -17,6 +19,122 @@ FEATURES = [
     "sin_hour","cos_hour","sin_doy"
 ]
 
+def _build_fallback_features(city):
+    """
+    Build an in-memory feature snapshot from recent weather rows.
+    This keeps Model A available even when weather_features is empty in a fresh deploy.
+    """
+    db = SessionLocal()
+    try:
+        rows = (
+            db.query(Weather)
+            .filter(Weather.city == city)
+            .filter(Weather.temperature.isnot(None))
+            .order_by(Weather.recorded_at.desc())
+            .limit(500)
+            .all()
+        )
+    finally:
+        db.close()
+
+    if not rows:
+        return None
+
+    rows = list(reversed(rows))
+
+    by_hour = {}
+    for row in rows:
+        if row.recorded_at is None or row.temperature is None:
+            continue
+        ts_hour = row.recorded_at.replace(minute=0, second=0, microsecond=0)
+        by_hour[ts_hour] = float(row.temperature)
+
+    if not by_hour:
+        return None
+
+    hours_sorted = sorted(by_hour.keys())
+    start_ts = hours_sorted[0]
+    end_ts = hours_sorted[-1]
+
+    series = []
+    cursor = start_ts
+    last_temp = float(by_hour[start_ts])
+    while cursor <= end_ts:
+        temp = float(by_hour.get(cursor, last_temp))
+        last_temp = temp
+        series.append(temp)
+        cursor += timedelta(hours=1)
+
+    if not series:
+        return None
+
+    latest_temp = float(series[-1])
+    latest_hour = end_ts.hour
+    latest_doy = end_ts.timetuple().tm_yday
+
+    def lag(hours):
+        idx = len(series) - 1 - int(hours)
+        if idx < 0:
+            return float(series[0])
+        return float(series[idx])
+
+    def tail(window):
+        size = min(int(window), len(series))
+        return [float(v) for v in series[-size:]]
+
+    def safe_mean(vals):
+        if not vals:
+            return latest_temp
+        return float(np.mean(vals))
+
+    def safe_std(vals):
+        if len(vals) < 2:
+            return 0.0
+        return float(np.std(vals))
+
+    def safe_trend(vals):
+        if len(vals) < 2:
+            return 0.0
+        x = np.arange(len(vals), dtype=float)
+        y = np.asarray(vals, dtype=float)
+        return float(np.polyfit(x, y, 1)[0])
+
+    lag_1 = lag(1)
+    lag_3 = lag(3)
+    lag_6 = lag(6)
+    lag_24 = lag(24)
+    lag_72 = lag(72)
+    lag_168 = lag(168)
+
+    w24 = tail(24)
+    w72 = tail(72)
+    w168 = tail(168)
+
+    return SimpleNamespace(
+        city=city,
+        recorded_at=end_ts,
+        temp=latest_temp,
+        temp_lag_1=lag_1,
+        temp_lag_3=lag_3,
+        temp_lag_6=lag_6,
+        temp_lag_24=lag_24,
+        temp_lag_72=lag_72,
+        temp_lag_168=lag_168,
+        temp_mean_72h=safe_mean(w72),
+        temp_mean_168h=safe_mean(w168),
+        temp_trend_72h=safe_trend(w72),
+        temp_trend_168h=safe_trend(w168),
+        delta_1h=latest_temp - lag_1,
+        delta_24h=latest_temp - lag_24,
+        roll_mean_24h=safe_mean(w24),
+        roll_std_24h=safe_std(w24),
+        sin_hour=sin(2 * pi * latest_hour / 24),
+        cos_hour=cos(2 * pi * latest_hour / 24),
+        sin_doy=sin(2 * pi * latest_doy / 365),
+        cos_doy=cos(2 * pi * latest_doy / 365),
+    )
+
+
 def _latest(city):
     db = SessionLocal()
     r = (
@@ -26,7 +144,10 @@ def _latest(city):
         .first()
     )
     db.close()
-    return r
+    if r:
+        return r
+
+    return _build_fallback_features(city)
 
 import os
 
