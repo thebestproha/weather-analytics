@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather Analytics</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+  <div class="portal-shell">
+    <div class="portal-nav">
+      <div class="portal-tabs">
+        <button class="active" data-view="set1">Set 1</button>
+        <button data-view="compare">Compare</button>
+        <button data-view="set2">Set 2</button>
+      </div>
+    </div>
+
+    <iframe id="portalFrame" class="portal-frame" title="Weather View"></iframe>
+  </div>
+
+  <script>
+    const frame = document.getElementById("portalFrame");
+    const buttons = Array.from(document.querySelectorAll(".portal-tabs button"));
+    const cacheBust = Date.now();
+
+    const views = {
+      set1: "/frontend/index.html",
+      compare: "/compare-static/side_by_side_compare.html",
+      set2: "/frontend/index_model_c.html",
+    };
+
+    function withCacheBust(url) {
+      const sep = url.includes("?") ? "&" : "?";
+      return `${url}${sep}cb=${cacheBust}`;
+    }
+
+    function selectView(viewKey) {
+      buttons.forEach((b) => b.classList.toggle("active", b.getAttribute("data-view") === viewKey));
+      const target = views[viewKey] || views.set1;
+      frame.src = withCacheBust(target);
+    }
+
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectView(btn.getAttribute("data-view"));
+      });
+    });
+
+    selectView("set1");
+  </script>
+</body>
+</html>

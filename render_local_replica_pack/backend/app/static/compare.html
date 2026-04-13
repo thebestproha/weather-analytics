@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather - 3-Way Compare</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .compare-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 5px 16px rgba(0,0,0,0.08);
+    }
+
+    .compare-card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #667085;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .compare-card .value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #27335b;
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 5px 16px rgba(0,0,0,0.08);
+    }
+
+    .compare-table th,
+    .compare-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eef2fa;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .compare-table th {
+      background: #f7f9ff;
+      color: #2f3b67;
+      font-weight: 700;
+    }
+
+    .compare-note {
+      color: #eef3ff;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>3-Way Compare</h1>
+      <div class="header-controls">
+        <div class="mode-switch">
+          <a href="/app/set1">Set 1</a>
+          <a href="/app/set2">Set 2</a>
+          <a class="active" href="/app/compare">3-Way Compare</a>
+        </div>
+        <select id="citySelect">
+          <option value="Chennai">Chennai</option>
+          <option value="Delhi">Delhi</option>
+          <option value="Mumbai">Mumbai</option>
+          <option value="Bengaluru">Bengaluru</option>
+          <option value="Hyderabad">Hyderabad</option>
+          <option value="Kolkata">Kolkata</option>
+          <option value="Pune">Pune</option>
+          <option value="Ahmedabad">Ahmedabad</option>
+          <option value="Jaipur">Jaipur</option>
+          <option value="Kochi">Kochi</option>
+          <option value="Trivandrum">Trivandrum</option>
+        </select>
+      </div>
+    </header>
+
+    <section class="chart-section">
+      <h2>Current Snapshot</h2>
+      <div class="compare-grid" id="snapshotGrid"></div>
+      <p class="compare-note">D1 means tomorrow for all model comparisons.</p>
+    </section>
+
+    <section class="chart-section">
+      <h2>D1-D5 Mean Temperature Compare</h2>
+      <div class="chart-container">
+        <canvas id="compareLineChart"></canvas>
+      </div>
+    </section>
+
+    <section class="daily-section">
+      <h2>Detailed Table (degC)</h2>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>OpenWeather</th>
+            <th>Set 1</th>
+            <th>Set 2</th>
+          </tr>
+        </thead>
+        <tbody id="compareBody"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    const citySelect = document.getElementById("citySelect");
+    const snapshotGrid = document.getElementById("snapshotGrid");
+    const compareBody = document.getElementById("compareBody");
+    const chartCanvas = document.getElementById("compareLineChart");
+    let compareChart = null;
+
+    function n(v) {
+      const x = Number(v);
+      return Number.isFinite(x) ? x : null;
+    }
+
+    async function fetchJson(url) {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return res.json();
+    }
+
+    function drawSnapshot(city, ow, set1, set2) {
+      const cards = [
+        {
+          label: `${city} OpenWeather`,
+          value: n(ow?.current?.temp),
+        },
+        {
+          label: `${city} Set 1`,
+          value: n(set1?.current?.temp),
+        },
+        {
+          label: `${city} Set 2`,
+          value: n(set2?.current?.temp),
+        },
+      ];
+
+      snapshotGrid.innerHTML = cards
+        .map(
+          (c) =>
+            `<div class="compare-card"><div class="label">${c.label}</div><div class="value">${c.value === null ? "-" : c.value.toFixed(1) + " degC"}</div></div>`
+        )
+        .join("");
+    }
+
+    function drawTable(ow, set1, set2) {
+      compareBody.innerHTML = "";
+      for (let i = 0; i < 5; i += 1) {
+        const day = `D${i + 1}`;
+        const owVal = n(ow?.daily?.mean?.[i]);
+        const s1Val = n(set1?.daily?.mean?.[i + 1]);
+        const s2Val = n(set2?.daily?.mean?.[i + 1]);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${day}</td>
+          <td>${owVal === null ? "-" : owVal.toFixed(1)}</td>
+          <td>${s1Val === null ? "-" : s1Val.toFixed(1)}</td>
+          <td>${s2Val === null ? "-" : s2Val.toFixed(1)}</td>
+        `;
+        compareBody.appendChild(tr);
+      }
+    }
+
+    function drawChart(ow, set1, set2) {
+      const labels = ["D1", "D2", "D3", "D4", "D5"];
+      const owData = labels.map((_, idx) => n(ow?.daily?.mean?.[idx]));
+      const s1Data = labels.map((_, idx) => n(set1?.daily?.mean?.[idx + 1]));
+      const s2Data = labels.map((_, idx) => n(set2?.daily?.mean?.[idx + 1]));
+
+      if (compareChart) {
+        compareChart.destroy();
+      }
+
+      compareChart = new Chart(chartCanvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "OpenWeather",
+              data: owData,
+              borderColor: "#10b981",
+              backgroundColor: "rgba(16,185,129,0.1)",
+              borderWidth: 2,
+              tension: 0.3,
+              spanGaps: true,
+            },
+            {
+              label: "Set 1",
+              data: s1Data,
+              borderColor: "#3b82f6",
+              backgroundColor: "rgba(59,130,246,0.1)",
+              borderWidth: 2,
+              tension: 0.3,
+              spanGaps: true,
+            },
+            {
+              label: "Set 2",
+              data: s2Data,
+              borderColor: "#f59e0b",
+              backgroundColor: "rgba(245,158,11,0.1)",
+              borderWidth: 2,
+              tension: 0.3,
+              spanGaps: true,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "top" },
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: (v) => `${Number(v).toFixed(1)} degC`,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    async function loadCompare(city) {
+      const [ow, set1, set2] = await Promise.all([
+        fetchJson(`/weather/openweather/compare/${encodeURIComponent(city)}`),
+        fetchJson(`/weather/final/${encodeURIComponent(city)}?long_model=b`),
+        fetchJson(`/weather/final/${encodeURIComponent(city)}?long_model=c`),
+      ]);
+
+      drawSnapshot(city, ow, set1, set2);
+      drawTable(ow, set1, set2);
+      drawChart(ow, set1, set2);
+    }
+
+    citySelect.addEventListener("change", () => {
+      loadCompare(citySelect.value);
+    });
+
+    loadCompare(citySelect.value);
+  </script>
+</body>
+</html>

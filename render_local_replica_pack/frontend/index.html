@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="app">
+
+    <header>
+      <h1>Weather</h1>
+      <select id="citySelect">
+        <option value="Chennai">Chennai</option>
+        <option value="Bangalore">Bangalore</option>
+        <option value="Mumbai">Mumbai</option>
+      </select>
+    </header>
+
+    <section class="current">
+      <div class="location">
+        <div class="city-name" id="cityName">Loading...</div>
+        <div class="timestamp" id="timestamp">Loading latest forecast...</div>
+      </div>
+      <div class="temp">
+        <span id="currentTemp">Loading...</span><span class="unit">°C</span>
+      </div>
+    </section>
+
+    <section class="chart-section">
+      <h2>24-Hour Forecast</h2>
+      <div class="chart-container">
+        <canvas id="hourlyChart"></canvas>
+      </div>
+    </section>
+
+    <section class="daily-section">
+      <h2>7-Day Forecast</h2>
+      <div class="daily-grid" id="dailyGrid"></div>
+    </section>
+
+    <section class="trends-section">
+      <h2>Climate & Past Trends</h2>
+      <div class="trends-grid">
+        <div class="trends-card">
+          <h3>Same-Day History</h3>
+          <div id="sameDayList" class="same-day-list"></div>
+        </div>
+        <div class="trends-card">
+          <h3>Monthly Climatology</h3>
+          <div class="chart-container small">
+            <canvas id="monthlyChart"></canvas>
+          </div>
+        </div>
+        <div class="trends-card">
+          <h3>Yearly Trend</h3>
+          <div class="chart-container small">
+            <canvas id="yearlyChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="trends-notes">
+        <p><strong>Same-day history</strong> compares today’s date across past years.</p>
+        <p><strong>Monthly climatology</strong> shows average temperature by month.</p>
+        <p><strong>Yearly trend</strong> highlights long-term warming or cooling.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="app.js?v=20260413c"></script>
+</body>
+</html>

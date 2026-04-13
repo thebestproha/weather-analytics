@@ -1,0 +1,288 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #333;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+header h1 {
+  color: white;
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+#citySelect {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 25px;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+#citySelect:hover {
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Current Weather */
+.current {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.location {
+  flex: 1;
+}
+
+.city-name {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.timestamp {
+  font-size: 14px;
+  color: #888;
+}
+
+.temp {
+  font-size: 72px;
+  font-weight: 700;
+  color: #667eea;
+  display: flex;
+  align-items: flex-start;
+}
+
+.unit {
+  font-size: 36px;
+  font-weight: 400;
+  margin-top: 10px;
+  margin-left: 5px;
+}
+
+/* Chart Section */
+.chart-section {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.chart-section h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+}
+
+/* Daily Section */
+.daily-section {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.daily-section h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.daily-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+}
+
+.day-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.day-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.day-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.9;
+}
+
+.day-temp {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.day-range {
+  margin-top: 10px;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  opacity: 0.9;
+}
+
+.day-hi,
+.day-lo {
+  font-weight: 600;
+}
+
+/* Trends Section */
+.trends-section {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  margin-top: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.trends-section h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.trends-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.trends-card {
+  background: #f7f8ff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: inset 0 0 0 1px rgba(102,126,234,0.15);
+}
+
+.trends-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #4b5bd4;
+  margin-bottom: 12px;
+}
+
+.chart-container.small {
+  height: 180px;
+}
+
+.same-day-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 10px;
+}
+
+.same-day-item {
+  background: white;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.same-day-year {
+  font-size: 12px;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 6px;
+}
+
+.same-day-temp {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+}
+
+.trends-notes {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.trends-notes strong {
+  color: #4b5bd4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app {
+    padding: 20px 15px;
+  }
+
+  header h1 {
+    font-size: 24px;
+  }
+
+  .current {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 30px;
+  }
+
+  .temp {
+    font-size: 56px;
+  }
+
+  .daily-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+  }
+
+  .chart-container {
+    height: 250px;
+  }
+}

@@ -1,0 +1,11 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+SQLAlchemy==2.0.37
+APScheduler==3.11.0
+requests==2.32.3
+numpy==2.2.1
+pandas==2.2.3
+scikit-learn==1.8.0
+joblib==1.4.2
+meteostat==1.6.8
+python-dateutil==2.9.0.post0
