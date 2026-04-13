@@ -130,10 +130,10 @@
     <div class="grid">
       <section class="panel" id="leftPanel">
         <h2>1) Set 1</h2>
-        <div class="meta" id="leftMeta">-</div>
+        <div class="meta" id="leftMeta">Loading Set 1...</div>
         <div class="row">
-          <div class="kpi"><div>Current Temp</div><div class="v" id="leftCurrent">-</div></div>
-          <div class="kpi"><div>Day-1 Mean</div><div class="v" id="leftDay1">-</div></div>
+          <div class="kpi"><div>Current Temp</div><div class="v" id="leftCurrent">Loading...</div></div>
+          <div class="kpi"><div>Day-1 Mean</div><div class="v" id="leftDay1">Loading...</div></div>
         </div>
         <div class="chart"><canvas id="leftHourly"></canvas></div>
         <div class="days" id="leftDays"></div>
@@ -141,10 +141,10 @@
 
       <section class="panel" id="midPanel">
         <h2>2) OpenWeather Forecast</h2>
-        <div class="meta" id="midMeta">OpenWeather 5-day / 3-hour forecast (aggregated daily)</div>
+        <div class="meta" id="midMeta">Loading OpenWeather baseline...</div>
         <div class="row">
-          <div class="kpi"><div>Current Temp</div><div class="v" id="midCurrent">-</div></div>
-          <div class="kpi"><div>Day-1 Mean</div><div class="v" id="midDay1">-</div></div>
+          <div class="kpi"><div>Current Temp</div><div class="v" id="midCurrent">Loading...</div></div>
+          <div class="kpi"><div>Day-1 Mean</div><div class="v" id="midDay1">Loading...</div></div>
         </div>
         <div class="chart"><canvas id="midHourly"></canvas></div>
         <div class="days" id="midDays"></div>
@@ -152,10 +152,10 @@
 
       <section class="panel" id="rightPanel">
         <h2 id="rightTitle">3) Set 2</h2>
-        <div class="meta" id="rightMeta">-</div>
+        <div class="meta" id="rightMeta">Loading Set 2...</div>
         <div class="row">
-          <div class="kpi"><div>Current Temp</div><div class="v" id="rightCurrent">-</div></div>
-          <div class="kpi"><div>Day-1 Mean</div><div class="v" id="rightDay1">-</div></div>
+          <div class="kpi"><div>Current Temp</div><div class="v" id="rightCurrent">Loading...</div></div>
+          <div class="kpi"><div>Day-1 Mean</div><div class="v" id="rightDay1">Loading...</div></div>
         </div>
         <div class="chart"><canvas id="rightHourly"></canvas></div>
         <div class="days" id="rightDays"></div>
@@ -209,6 +209,7 @@
     let leftChart = null;
     let midChart = null;
     let rightChart = null;
+    let activeCompareRequestSeq = 0;
 
     function k(v) {
       return Number.isFinite(v) ? `${v.toFixed(1)}°C` : "-";
@@ -302,6 +303,43 @@
         <div class="d" style="grid-column: 1 / -1; min-height: 76px; display: flex; align-items: center; justify-content: center; color: #64748b;">
           ${message}
         </div>
+      `;
+    }
+
+    function setCompareLoadingState(city) {
+      document.getElementById("leftMeta").textContent = "Loading Set 1...";
+      document.getElementById("midMeta").textContent = "Loading OpenWeather baseline...";
+      document.getElementById("rightMeta").textContent = "Loading Set 2...";
+      document.getElementById("rightTitle").textContent = "3) Set 2";
+
+      document.getElementById("leftCurrent").textContent = "Loading...";
+      document.getElementById("leftDay1").textContent = "Loading...";
+      document.getElementById("midCurrent").textContent = "Loading...";
+      document.getElementById("midDay1").textContent = "Loading...";
+      document.getElementById("rightCurrent").textContent = "Loading...";
+      document.getElementById("rightDay1").textContent = "Loading...";
+
+      if (leftChart) {
+        leftChart.destroy();
+        leftChart = null;
+      }
+      if (midChart) {
+        midChart.destroy();
+        midChart = null;
+      }
+      if (rightChart) {
+        rightChart.destroy();
+        rightChart = null;
+      }
+
+      renderPlaceholderDays("leftDays", `Loading Set 1 for ${city}...`);
+      renderPlaceholderDays("midDays", "Loading OpenWeather...");
+      renderPlaceholderDays("rightDays", `Loading Set 2 for ${city}...`);
+
+      document.getElementById("diffBody").innerHTML = `
+        <tr>
+          <td colspan="6" style="color:#64748b;">Loading comparison table...</td>
+        </tr>
       `;
     }
 
@@ -453,7 +491,9 @@
     async function load() {
       const city = document.getElementById("city").value;
       const status = document.getElementById("status");
+      const requestSeq = ++activeCompareRequestSeq;
       status.textContent = `Loading ${city}...`;
+      setCompareLoadingState(city);
 
       try {
         let openWeather = null;
@@ -463,10 +503,18 @@
           openWeather = null;
         }
 
+        if (requestSeq !== activeCompareRequestSeq) {
+          return;
+        }
+
         const [oldResp, newResp] = await Promise.all([
-          fetch(`${API}/${encodeURIComponent(city)}?long_model=b`),
-          fetch(`${API}/${encodeURIComponent(city)}?long_model=c`),
+          fetch(`${API}/${encodeURIComponent(city)}?long_model=b`, { cache: "no-store" }),
+          fetch(`${API}/${encodeURIComponent(city)}?long_model=c`, { cache: "no-store" }),
         ]);
+
+        if (requestSeq !== activeCompareRequestSeq) {
+          return;
+        }
 
         if (!oldResp.ok || !newResp.ok) {
           showComingSoonComparison(city, openWeather);
@@ -476,6 +524,10 @@
 
         const oldModel = await oldResp.json();
         const newModel = await newResp.json();
+
+        if (requestSeq !== activeCompareRequestSeq) {
+          return;
+        }
 
         document.getElementById("leftMeta").textContent = oldModel.meta.model;
         document.getElementById("rightMeta").textContent = newModel.meta.model;
@@ -496,13 +548,18 @@
         const oldTomorrow = modelDailyFromTomorrow(oldModel.daily, horizon);
         const newTomorrow = modelDailyFromTomorrow(newModel.daily, horizon);
 
-        document.getElementById("leftCurrent").textContent = k(Number(oldModel.current.temp));
+        const currentUnified = Number(openWeather.current?.temp);
+        document.getElementById("leftCurrent").textContent = Number.isFinite(currentUnified)
+          ? k(currentUnified)
+          : k(Number(oldModel.current.temp));
         document.getElementById("leftDay1").textContent = k(Number(oldTomorrow.mean[0]));
 
         document.getElementById("midCurrent").textContent = k(Number(openWeather.current.temp));
         document.getElementById("midDay1").textContent = k(Number(openWeather.daily.mean[0]));
 
-        document.getElementById("rightCurrent").textContent = k(Number(newModel.current.temp));
+        document.getElementById("rightCurrent").textContent = Number.isFinite(currentUnified)
+          ? k(currentUnified)
+          : k(Number(newModel.current.temp));
         document.getElementById("rightDay1").textContent = k(Number(newTomorrow.mean[0]));
 
         leftChart = drawChart("leftHourly", leftChart, oldModel.hourly, "#1e40af");
@@ -518,6 +575,9 @@
 
         status.textContent = `Loaded: ${city}`;
       } catch (err) {
+        if (requestSeq !== activeCompareRequestSeq) {
+          return;
+        }
         showComingSoonComparison(city, null);
         status.textContent = `Coming soon for ${city}: Set 1/Set 2 model support is being added.`;
       }

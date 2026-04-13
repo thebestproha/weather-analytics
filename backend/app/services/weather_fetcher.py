@@ -80,6 +80,21 @@ def fetch_openweather_today_summary(city: str):
     r.raise_for_status()
     payload = r.json()
 
+    current_temp = None
+    try:
+        current_url = (
+            f"{BASE_URL}"
+            f"?lat={lat}&lon={lon}&units=metric&appid={OPENWEATHER_KEY}"
+        )
+        current_resp = requests.get(current_url, timeout=10)
+        current_resp.raise_for_status()
+        current_payload = current_resp.json()
+        current_val = current_payload.get("main", {}).get("temp")
+        if current_val is not None:
+            current_temp = float(current_val)
+    except Exception:
+        current_temp = None
+
     temps = []
     for item in payload.get("list", []):
         dt_txt = item.get("dt_txt")
@@ -88,24 +103,19 @@ def fetch_openweather_today_summary(city: str):
             if temp is not None:
                 temps.append(float(temp))
 
+    if current_temp is not None:
+        temps.append(current_temp)
+
     if not temps:
-        # Late-day edge case: forecast feed may contain no remaining same-day slots.
-        current_url = (
-            f"{BASE_URL}"
-            f"?lat={lat}&lon={lon}&units=metric&appid={OPENWEATHER_KEY}"
-        )
-        current_resp = requests.get(current_url, timeout=10)
-        current_resp.raise_for_status()
-        current_payload = current_resp.json()
-        current_temp = float(current_payload.get("main", {}).get("temp"))
+        # No same-day forecast slots and current call unavailable.
 
         return {
             "city": city,
             "today_key": today_key,
             "samples": 0,
-            "mean": round(current_temp, 2),
-            "upper": round(current_temp, 2),
-            "lower": round(current_temp, 2),
+            "mean": None,
+            "upper": None,
+            "lower": None,
         }
 
     mean_val = sum(temps) / len(temps)
@@ -178,10 +188,22 @@ def fetch_openweather_compare(city: str):
         labels.append(label)
 
     current_temp = None
-    if entries:
-        first_temp = entries[0].get("main", {}).get("temp")
-        if first_temp is not None:
-            current_temp = float(first_temp)
+    try:
+        current_url = (
+            f"{BASE_URL}"
+            f"?lat={lat}&lon={lon}&units=metric&appid={OPENWEATHER_KEY}"
+        )
+        current_resp = requests.get(current_url, timeout=10)
+        current_resp.raise_for_status()
+        current_payload = current_resp.json()
+        current_val = current_payload.get("main", {}).get("temp")
+        if current_val is not None:
+            current_temp = float(current_val)
+    except Exception:
+        if entries:
+            first_temp = entries[0].get("main", {}).get("temp")
+            if first_temp is not None:
+                current_temp = float(first_temp)
 
     return {
         "city": city,

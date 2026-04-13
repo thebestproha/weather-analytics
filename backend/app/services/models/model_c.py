@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import pi, sin
 
 import joblib
@@ -70,6 +70,54 @@ def _build_feature_vector(history_temps, forecast_start_date):
     return np.array(feats, dtype=float)
 
 
+def _circular_doy_distance(a: int, b: int) -> int:
+    diff = abs(a - b)
+    return min(diff, 365 - diff)
+
+
+def _seasonal_targets_from_history(daily_rows, forecast_start_date, horizon: int = 7):
+    """Builds day-of-year seasonal targets from historical daily rows."""
+    dated = []
+    for row in daily_rows:
+        try:
+            d = datetime.fromisoformat(row["date"]).date()
+            t = float(row["avg_temp"])
+            dated.append((d, t))
+        except Exception:
+            continue
+
+    if not dated:
+        return []
+
+    month_buckets = {}
+    for d, t in dated:
+        month_buckets.setdefault(d.month, []).append(t)
+
+    all_mean = _mean([t for _, t in dated])
+    targets = []
+    for i in range(horizon):
+        target_date = forecast_start_date + timedelta(days=i)
+        target_doy = target_date.timetuple().tm_yday
+
+        near = [
+            t
+            for d, t in dated
+            if _circular_doy_distance(d.timetuple().tm_yday, target_doy) <= 20
+        ]
+
+        if len(near) >= 8:
+            targets.append(_mean(near))
+            continue
+
+        month_vals = month_buckets.get(target_date.month, [])
+        if month_vals:
+            targets.append(_mean(month_vals))
+        else:
+            targets.append(all_mean)
+
+    return targets
+
+
 def _heuristic_fallback(city: str, db):
     """
     Legacy Model C fallback when trained artifacts are missing.
@@ -101,6 +149,15 @@ def _heuristic_fallback(city: str, db):
         seasonal = amplitude * sin(2 * pi * day / 7)
         trend = weekly_slope * day
         means.append(round(base + seasonal + trend, 2))
+
+    if daily:
+        latest_date = datetime.fromisoformat(daily[-1]["date"]).date()
+        seasonal_targets = _seasonal_targets_from_history(daily, latest_date, horizon=7)
+        if len(seasonal_targets) >= 7:
+            means = [
+                round(0.70 * means[i] + 0.30 * float(seasonal_targets[i]), 2)
+                for i in range(7)
+            ]
 
     upper = [round(v + (2.0 + 0.1 * i), 2) for i, v in enumerate(means)]
     lower = [round(v - (2.0 + 0.1 * i), 2) for i, v in enumerate(means)]
@@ -146,9 +203,17 @@ def forecast_daily_model_c(city: str, db):
         # Keep Model C adaptive but softly anchored to stable climatology baseline.
         baseline_b = forecast_daily_model_b(city, db).get("mean", [])
         if len(baseline_b) >= 7:
-            blend_weight_b = 0.60
+            blend_weight_b = 0.45
             means = [
                 (1.0 - blend_weight_b) * means[i] + blend_weight_b * float(baseline_b[i])
+                for i in range(7)
+            ]
+
+        seasonal_targets = _seasonal_targets_from_history(daily, forecast_start, horizon=7)
+        if len(seasonal_targets) >= 7:
+            means = [
+                (1.0 - min(0.35, 0.15 + 0.04 * i)) * means[i]
+                + min(0.35, 0.15 + 0.04 * i) * float(seasonal_targets[i])
                 for i in range(7)
             ]
 

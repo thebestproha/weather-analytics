@@ -146,7 +146,15 @@ def get_final_forecast(city: str, db, long_model: str = "b", compare_long_models
     # 1. CURRENT TEMPERATURE
     # -------------------------------
     # Try live weather first (source="live"), fallback to Meteostat
-    latest = (
+    latest_openweather = (
+        db.query(Weather)
+        .filter(Weather.city == city)
+        .filter(Weather.source == "openweather")
+        .order_by(Weather.recorded_at.desc())
+        .first()
+    )
+
+    latest = latest_openweather or (
         db.query(Weather)
         .filter(Weather.city == city)
         .order_by(Weather.recorded_at.desc())

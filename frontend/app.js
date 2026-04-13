@@ -26,6 +26,60 @@ const yearlyChartEl = document.getElementById("yearlyChart");
 let chart = null;
 let monthlyChart = null;
 let yearlyChart = null;
+let activeRequestSeq = 0;
+
+function drawCanvasLoading(canvasId, message) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const width = Math.max(300, canvas.clientWidth || 300);
+  const height = Math.max(150, canvas.clientHeight || 150);
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#9aa3bd";
+  ctx.font = "14px Segoe UI";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(message, width / 2, height / 2);
+}
+
+function destroyCharts() {
+  if (chart) {
+    chart.destroy();
+    chart = null;
+  }
+  if (monthlyChart) {
+    monthlyChart.destroy();
+    monthlyChart = null;
+  }
+  if (yearlyChart) {
+    yearlyChart.destroy();
+    yearlyChart = null;
+  }
+}
+
+function setLoadingState(city) {
+  cityNameEl.textContent = city || "Loading...";
+  timestampEl.textContent = "Loading latest forecast...";
+  currentTempEl.textContent = "Loading...";
+
+  destroyCharts();
+
+  dailyGrid.innerHTML = `
+    <div style="grid-column: 1 / -1; border: 1px dashed #cdd6ee; border-radius: 12px; padding: 14px; color: #5b6688; background: #f7f9ff; font-weight: 600;">
+      Loading latest daily forecast...
+    </div>
+  `;
+  sameDayListEl.innerHTML = "<div style=\"color:#777;\">Loading trends...</div>";
+  drawCanvasLoading("hourlyChart", "Loading hourly forecast...");
+  drawCanvasLoading("monthlyChart", "Loading monthly climatology...");
+  drawCanvasLoading("yearlyChart", "Loading yearly trend...");
+}
 
 /**
  * Format timestamp for display
@@ -126,7 +180,7 @@ function normalizeDailySeries(daily, target = 7) {
 async function fetchTodayOpenWeatherSummary(city) {
   try {
     const url = `${OPENWEATHER_TODAY_BASE}/${encodeURIComponent(city)}`;
-    const response = await fetch(url);
+    const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) {
       return null;
     }
@@ -166,18 +220,7 @@ function showComingSoonState(city, reason = "") {
   timestampEl.textContent = "City forecast support is coming soon.";
   currentTempEl.textContent = "—";
 
-  if (chart) {
-    chart.destroy();
-    chart = null;
-  }
-  if (monthlyChart) {
-    monthlyChart.destroy();
-    monthlyChart = null;
-  }
-  if (yearlyChart) {
-    yearlyChart.destroy();
-    yearlyChart = null;
-  }
+  destroyCharts();
 
   dailyGrid.innerHTML = `
     <div style="grid-column: 1 / -1; border: 1px dashed #cdd6ee; border-radius: 12px; padding: 14px; color: #5b6688; background: #f7f9ff; font-weight: 600;">
@@ -195,10 +238,18 @@ function showComingSoonState(city, reason = "") {
  * Load weather data for a city
  */
 async function loadWeather(city) {
+  const requestSeq = ++activeRequestSeq;
+  setLoadingState(city);
+
   try {
     const response = await fetch(
-      `${API_BASE}/${encodeURIComponent(city)}?long_model=${encodeURIComponent(SELECTED_LONG_MODEL)}`
+      `${API_BASE}/${encodeURIComponent(city)}?long_model=${encodeURIComponent(SELECTED_LONG_MODEL)}`,
+      { cache: "no-store" }
     );
+
+    if (requestSeq !== activeRequestSeq) {
+      return;
+    }
     
     if (!response.ok) {
       showComingSoonState(city, `HTTP ${response.status}`);
@@ -206,6 +257,10 @@ async function loadWeather(city) {
     }
     
     const data = await response.json();
+
+    if (requestSeq !== activeRequestSeq) {
+      return;
+    }
     
     // Update Meta Information
     cityNameEl.textContent = data.meta?.city || city;
@@ -226,6 +281,10 @@ async function loadWeather(city) {
     if (!todayOpenWeather) {
       todayOpenWeather = await fetchTodayOpenWeatherSummary(data.meta?.city || city);
     }
+
+    if (requestSeq !== activeRequestSeq) {
+      return;
+    }
     
     // Render 7-Day Forecast
     if (data.daily && data.daily.mean) {
@@ -233,30 +292,47 @@ async function loadWeather(city) {
     }
 
     // Render Trends (read-only diagnostics)
-    loadTrends(city);
+    loadTrends(city, requestSeq);
     
   } catch (error) {
+    if (requestSeq !== activeRequestSeq) {
+      return;
+    }
     console.error("Error loading weather data:", error);
     showComingSoonState(city, error?.message || "request_failed");
   }
 }
 
-async function loadTrends(city) {
+async function loadTrends(city, requestSeq) {
   try {
     const trendsUrl = SELECTED_TRENDS_MODE === "model"
       ? `${TRENDS_MODEL_BASE}/${encodeURIComponent(city)}?long_model=${encodeURIComponent(SELECTED_LONG_MODEL)}`
       : `${TRENDS_BASE}/${encodeURIComponent(city)}`;
-    const response = await fetch(trendsUrl);
+    const response = await fetch(trendsUrl, { cache: "no-store" });
+
+    if (requestSeq !== activeRequestSeq) {
+      return;
+    }
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
+
+    if (requestSeq !== activeRequestSeq) {
+      return;
+    }
+
     renderSameDayHistory(data.same_day || []);
     renderMonthlyChart(data.monthly || []);
     renderYearlyChart(data.yearly || []);
   } catch (error) {
+    if (requestSeq !== activeRequestSeq) {
+      return;
+    }
     console.error("Error loading trends data:", error);
+    sameDayListEl.innerHTML = "<div style=\"color:#777;\">Trends unavailable</div>";
   }
 }
 
