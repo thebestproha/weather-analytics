@@ -29,6 +29,7 @@ Thumbs.db
 *.log
 # Databases
 *.db
+!render_local_replica_pack/weather.db
 
 # Python
 venv/
