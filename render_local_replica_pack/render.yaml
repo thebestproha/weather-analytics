@@ -1,5 +1,20 @@
 services:
   - type: web
+    name: weather-analytics-index-only
+    runtime: python
+    rootDir: render_local_replica_pack/backend
+    plan: free
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: WEATHER_DB_PATH
+        value: ../weather.db
+      - key: DISABLE_SCHEDULER
+        value: "true"
+services:
+  - type: web
     name: weather-analytics-replica
     runtime: python
     rootDir: render_local_replica_pack/backend
